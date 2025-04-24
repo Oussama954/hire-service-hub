@@ -5,6 +5,7 @@ import 'package:e_commerce/providers/authentication/login_provider.dart';
 import 'package:e_commerce/providers/authentication/registration_provider.dart';
 import 'package:e_commerce/providers/bottom_navigation/navigation_provider.dart';
 import 'package:e_commerce/providers/category/category_provider.dart';
+import 'package:e_commerce/providers/city/city_provider.dart';
 import 'package:e_commerce/providers/chatting/chatting_provider.dart';
 import 'package:e_commerce/providers/network_provider_controller.dart';
 import 'package:e_commerce/providers/notifications_count/notification_badge_provider.dart';
@@ -23,7 +24,15 @@ import 'package:provider/provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  try {
+    await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  } catch (e) {
+    if (e.toString().contains('duplicate-app')) {
+      print('Firebase already initialized');
+    } else {
+      print('Error initializing Firebase: $e');
+    }
+  }
   await NotificationService.instance.initialize();
   runApp(const MyApp());
 }
@@ -52,6 +61,7 @@ class _MyAppState extends State<MyApp> {
         ChangeNotifierProvider(create: (_) => ForgetPasswordProvider()),
         ChangeNotifierProvider(create: (_) => UpdatePasswordProvider()),
         ChangeNotifierProvider(create: (_) => CategoryProvider()),
+        ChangeNotifierProvider(create: (_) => CityProvider()),
         ChangeNotifierProvider(create: (_) => ProfileUpdationProvider()),
         ChangeNotifierProvider(create: (_) => ServiceProvider()),
         ChangeNotifierProvider(create: (_) => FilterProvider()),

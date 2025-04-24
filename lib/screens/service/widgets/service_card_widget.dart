@@ -33,17 +33,28 @@ class ServiceCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Cover Image
-              service.coverPhoto != null && service.coverPhoto!.isNotEmpty
+              (service.coverPhoto?.trim().isNotEmpty ?? false)
                   ? ClipRRect(
                       borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(16),
                         topRight: Radius.circular(16),
                       ),
                       child: Image.network(
-                        '${service.coverPhoto}',
+                        service.coverPhoto!.trim(),
                         width: double.infinity,
                         height: 180,
                         fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) =>
+                            Container(
+                          width: double.infinity,
+                          height: 180,
+                          color: Colors.grey[200],
+                          child: const Icon(Icons.broken_image, size: 60),
+                        ),
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Center(child: CircularProgressIndicator());
+                        },
                       ),
                     )
                   : ClipRRect(
@@ -52,7 +63,7 @@ class ServiceCard extends StatelessWidget {
                         topRight: Radius.circular(16),
                       ),
                       child: Image.asset(
-                        'assets/images/content-writer.webp', // Placeholder cover image from assets
+                        'assets/images/content-writer.webp',
                         width: double.infinity,
                         height: 180,
                         fit: BoxFit.cover,
@@ -90,7 +101,7 @@ class ServiceCard extends StatelessWidget {
                             const Icon(IconlyLight.location),
                             const SizedBox(width: 5),
                             Text(
-                              service.city,
+                              service.city ?? 'Location not specified',
                               style: const TextStyle(
                                 fontSize: 14,
                               ),
@@ -98,7 +109,7 @@ class ServiceCard extends StatelessWidget {
                           ],
                         ),
                         Text(
-                          "Starting at Rs${service.price}",
+                          "Starting at Rs${service.price ?? '0'}",
                           style: TextStyle(
                             fontSize: 14,
                             color: AppTheme.fMainColor,

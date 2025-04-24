@@ -9,22 +9,33 @@ class OrderService {
     String? accessToken = await AuthService.getAccessToken();
     if (accessToken == null) throw Exception("Access token is missing.");
 
-    final url =
-        Uri.parse("${Constants.baseUrl}${Constants.userApiBookingOrder}/");
+    // Remove trailing slash to avoid potential issues
+    final url = Uri.parse("${Constants.baseUrl}${Constants.userApiBookingOrder}");
     final headers = {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer $accessToken',
     };
 
+    // Log request details for debugging
+    final orderJson = order.toJson();
+    print('Booking order with URL: $url');
+    print('Headers: $headers');
+    print('Order JSON: ${jsonEncode(orderJson)}');
+
     try {
       final response = await http.post(
         url,
         headers: headers,
-        body: jsonEncode(order.toJson()),
+        body: jsonEncode(orderJson),
       );
+
+      // Log response for debugging
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
 
       return response; // Pass the response back to the repo
     } catch (e) {
+      print('Network error when booking order: $e');
       throw Exception("Failed to book order: $e");
     }
   }

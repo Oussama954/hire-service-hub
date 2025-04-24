@@ -16,12 +16,12 @@ class ServiceRepository {
 
   Future<List<ServiceModel>> getFilterServices({
     String? categoryId,
-    String? city,
+    String? cityId,
     String? priceRangeType,
   }) async {
     return await serviceService.fetchFilteredServices(
       categoryId: categoryId,
-      city: city,
+      cityId: cityId,
       priceRangeType: priceRangeType,
     );
   }

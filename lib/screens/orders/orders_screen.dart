@@ -5,7 +5,6 @@ import 'package:e_commerce/providers/authentication/authentication_provider.dart
 import 'package:e_commerce/providers/orders/orders_provider.dart';
 import 'package:e_commerce/screens/orders/order_detail_screen.dart';
 import 'package:e_commerce/utils/api_constnsts.dart';
-import 'package:e_commerce/utils/app_theme.dart';
 import 'package:e_commerce/utils/date_and_time_formatting.dart';
 import 'package:flutter/material.dart';
 import 'package:iconly/iconly.dart';
@@ -64,7 +63,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
                       fontWeight: FontWeight.normal, fontSize: 14),
                   infoText: _getHelperMessage(role),
                   iconData: Icons.help,
-                  iconColor: AppTheme.fMainColor)),
+                  iconColor: Colors.blue)),
         ],
       ),
       body: Consumer2<OrderProvider, AuthenticationProvider>(
@@ -138,172 +137,160 @@ class _OrdersScreenState extends State<OrdersScreen> {
                                             : false,
                                   )));
                             },
-                            child: CardyContainer(
-                              margin: const EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 8),
-                              color: isDarkMode
-                                  ? AppTheme.fdarkBlue
-                                  : Colors.white,
-                              spreadRadius: 0,
-                              blurRadius: 1,
-                              shadowColor:
-                                  isDarkMode ? AppTheme.fdarkBlue : Colors.grey,
-                              borderRadius: BorderRadius.circular(16),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                padding: const EdgeInsets.all(12),
-                                child: Column(
-                                  children: [
-                                    Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        ClipRRect(
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                          child:
-                                              order.service.coverPhoto != null
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              child: Material(
+                                elevation: 1,
+                                color: isDarkMode ? Colors.grey[850] : Colors.white,
+                                shadowColor: isDarkMode ? Colors.black54 : Colors.grey,
+                                borderRadius: BorderRadius.circular(16),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(12),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      // Top row with service image and details
+                                      Row(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          // Service Image
+                                          ClipRRect(
+                                            borderRadius: BorderRadius.circular(8),
+                                            child: SizedBox(
+                                              width: 80,
+                                              height: 60,
+                                              child: order.service?.coverPhoto != null &&
+                                                      order.service!.coverPhoto.toString().isNotEmpty
                                                   ? Image.network(
-                                                      '${Constants.baseUrl}${order.service.coverPhoto}',
-                                                      width: 80,
-                                                      height: 60,
+                                                      order.service!.coverPhoto.toString(),
                                                       fit: BoxFit.cover,
+                                                      errorBuilder: (context, error, stackTrace) {
+                                                        return Image.asset(
+                                                          'assets/images/content-writer.webp',
+                                                          fit: BoxFit.cover,
+                                                        );
+                                                      },
                                                     )
                                                   : Image.asset(
                                                       'assets/images/content-writer.webp',
-                                                      width: 80,
-                                                      height: 60,
                                                       fit: BoxFit.cover,
                                                     ),
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Row(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment
-                                                        .spaceBetween,
-                                                children: [
-                                                  Text(
-                                                    "Rs${order.orderPrice}",
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          // Service details
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Row(
+                                                  children: [
+                                                    Expanded(
+                                                      child: Text(
+                                                        order.service?.serviceName ?? "Service",
+                                                        style: const TextStyle(
+                                                          fontSize: 16,
+                                                          fontWeight: FontWeight.bold,
+                                                        ),
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow.ellipsis,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                const SizedBox(height: 2),
+                                                Text(
+                                                  order.service?.description ?? "",
+                                                  style: const TextStyle(
+                                                    fontSize: 12,
+                                                  ),
+                                                  maxLines: 2,
+                                                  overflow: TextOverflow.ellipsis,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8),
+                                      // Status row
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          // Customer info
+                                          Expanded(
+                                            child: Row(
+                                              children: [
+                                                ClipRRect(
+                                                  borderRadius: BorderRadius.circular(16),
+                                                  child: CachedNetworkImage(
+                                                    imageUrl: isCustomer
+                                                        ? authProvider.user?.profilePicture ??
+                                                            'https://static.vecteezy.com/system/resources/thumbnails/009/292/244/small_2x/default-avatar-icon-of-social-media-user-vector.jpg'
+                                                        : order.customer?.profilePicture ??
+                                                            "https://static.vecteezy.com/system/resources/thumbnails/009/292/244/small_2x/default-avatar-icon-of-social-media-user-vector.jpg",
+                                                    width: 30,
+                                                    height: 30,
+                                                    fit: BoxFit.cover,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Expanded(
+                                                  child: Text(
+                                                    isCustomer
+                                                        ? "${authProvider.user?.firstName} ${authProvider.user?.lastName}"
+                                                        : "${order.customer?.firstName ?? ""} ${order.customer?.lastName ?? ""}",
                                                     style: const TextStyle(
                                                       fontSize: 14,
-                                                      fontWeight:
-                                                          FontWeight.bold,
+                                                      fontWeight: FontWeight.bold,
                                                     ),
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
                                                   ),
-                                                ],
-                                              ),
-                                              const SizedBox(height: 2),
-                                              Text(
-                                                order.service.description,
-                                                style: const TextStyle(
-                                                  fontSize: 12,
                                                 ),
-                                                maxLines: 3,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ],
+                                              ],
+                                            ),
                                           ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(
-                                      height: 8,
-                                    ),
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Row(
-                                          children: [
-                                            ClipRRect(
-                                              borderRadius:
-                                                  BorderRadius.circular(16),
-                                              child: CachedNetworkImage(
-                                                imageUrl: isCustomer
-                                                    ? authProvider.user
-                                                            ?.profilePicture ??
-                                                        'https://static.vecteezy.com/system/resources/thumbnails/009/292/244/small_2x/default-avatar-icon-of-social-media-user-vector.jpg'
-                                                    : order.customer
-                                                            ?.profilePicture ??
-                                                        "https://static.vecteezy.com/system/resources/thumbnails/009/292/244/small_2x/default-avatar-icon-of-social-media-user-vector.jpg",
-                                                width: 30,
-                                                height: 30,
-                                                fit: BoxFit.cover,
-                                              ),
+                                          // Order status
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 8, vertical: 4),
+                                            decoration: BoxDecoration(
+                                              color: getStatusColor(order.orderStatus),
+                                              borderRadius: BorderRadius.circular(16),
                                             ),
-                                            const SizedBox(
-                                              width: 8,
-                                            ),
-                                            Text(
-                                              isCustomer
-                                                  ? "${authProvider.user?.firstName} "
-                                                      "${authProvider.user?.lastName}"
-                                                  : "${order.customer?.firstName} "
-                                                      " ${order.customer?.lastName}",
+                                            child: Text(
+                                              order.orderStatus.toLowerCase(),
                                               style: const TextStyle(
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.bold,
-                                              ),
+                                                  color: Colors.white, fontSize: 12),
                                             ),
-                                          ],
-                                        ),
-                                        CardyContainer(
-                                          padding: const EdgeInsets.all(3),
-                                          spreadRadius: 0,
-                                          blurRadius: 1,
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                          color:
-                                              getStatusColor(order.orderStatus),
-                                          child: Text(
-                                            order.orderStatus.toUpperCase(),
-                                            style: const TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 10),
                                           ),
-                                        ),
-                                      ],
-                                    ),
-                                    const Divider(),
-                                    Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Row(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            const Icon(
-                                              IconlyLight.time_circle,
-                                              size: 18,
+                                        ],
+                                      ),
+                                      const SizedBox(height: 16),
+                                      // Bottom row with price and date
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            "Price: \$${order.orderPrice}",
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold,
+                                              color: isDarkMode ? Colors.white : Colors.green[700],
                                             ),
-                                            const SizedBox(
-                                              width: 5,
+                                          ),
+                                          Text(
+                                            "${order.placedAt.day}-${order.placedAt.month}-${order.placedAt.year}",
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey,
                                             ),
-                                            Text(
-                                              formatDate(
-                                                order.orderDate.toString(),
-                                              ),
-                                              style:
-                                                  const TextStyle(fontSize: 12),
-                                            ),
-                                          ],
-                                        ),
-                                        const Icon(Icons.more_vert_outlined)
-                                      ],
-                                    )
-                                  ],
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
@@ -330,7 +317,7 @@ class _OrdersScreenState extends State<OrdersScreen> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
-        backgroundColor: isDarkMode ? AppTheme.fdarkBlue : Colors.white,
+        backgroundColor: isDarkMode ? Colors.grey[850] : Colors.white,
         label: Text(label.toUpperCase()),
         selected: selectedFilter == label,
         onSelected: (isSelected) {

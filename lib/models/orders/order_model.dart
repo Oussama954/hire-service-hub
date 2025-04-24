@@ -53,10 +53,11 @@ class Order {
 
   Map<String, dynamic> toJson() {
     return {
-      'order_date': orderDate,
+      'booking_date': orderDate,
       'service_id': serviceId,
       'payment_method': paymentMethod,
-      if (additionalNotes != null) 'additional_notes': additionalNotes,
+      if (additionalNotes != null) 'special_instructions': additionalNotes,
+      'location': {}  // Server expects this field
     };
   }
 }

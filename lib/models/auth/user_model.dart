@@ -98,7 +98,7 @@ class UserModel {
       gender: userJson['gender'] ?? '',
       otp: userJson['otp'] ?? '',
       profilePicture: userJson['profile_picture'] != null
-          ? "${Constants.baseUrl}${userJson['profile_picture']}"
+          ? userJson['profile_picture']
           : 'https://static.vecteezy.com/system/resources/thumbnails/009/292/244/small_2x/default-avatar-icon-of-social-media-user-vector.jpg',
       cnic: userJson['cnic'] ?? '',
       address: userJson['address'] != null
@@ -145,7 +145,7 @@ class UserModel {
       gender: userJson['gender'] ?? '',
       otp: '', // Not part of the response
       profilePicture: userJson['profile_picture'] != null
-          ? "${Constants.baseUrl}${userJson['profile_picture']}"
+          ? userJson['profile_picture']
           : 'https://static.vecteezy.com/system/resources/thumbnails/009/292/244/small_2x/default-avatar-icon-of-social-media-user-vector.jpg',
 
       cnic: userJson['cnic'] ?? '',

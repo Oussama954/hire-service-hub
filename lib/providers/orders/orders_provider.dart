@@ -31,22 +31,42 @@ class OrderProvider with ChangeNotifier {
     } catch (e) {
       _isLoading = false;
 
+      // Log the full error for debugging
+      print('Booking error (full): $e');
+
       try {
-        // Attempt to extract the JSON message
+        // First try to extract a JSON object from the error string
         final errorJson = RegExp(r'\{.*\}').stringMatch(e.toString());
         if (errorJson != null) {
           final Map<String, dynamic> errorMap = json.decode(errorJson);
-          _errorMessage = errorMap['message'] ?? 'An unknown error occurred';
+          
+          // Check for errors array in the response
+          if (errorMap.containsKey('errors') && errorMap['errors'] is List && errorMap['errors'].isNotEmpty) {
+            final firstError = errorMap['errors'][0];
+            _errorMessage = firstError['msg'] ?? firstError['message'] ?? 'Validation error';
+          } else {
+            // Check for message directly
+            _errorMessage = errorMap['message'] ?? errorMap['error'] ?? 'Server error';
+          }
+        } else if (e.toString().contains('SocketException')) {
+          _errorMessage = 'Network error: Please check your internet connection';
         } else {
-          _errorMessage = 'An unknown error occurred';
+          // If no JSON pattern found, use the error string directly but trim it
+          final errorString = e.toString();
+          if (errorString.length > 100) {
+            _errorMessage = '${errorString.substring(0, 100)}...';
+          } else {
+            _errorMessage = errorString;
+          }
         }
       } catch (parseError) {
-        // If JSON parsing fails, fallback to a default message
-        _errorMessage = 'An error occurred: ${e.toString()}';
+        // If JSON parsing fails, provide a more useful error message
+        print('Error parsing error message: $parseError');
+        _errorMessage = 'An error occurred while communicating with the server';
       }
 
       // Debug log for further inspection
-      print('Error: $_errorMessage');
+      print('Error message shown to user: $_errorMessage');
 
       notifyListeners();
       return null;

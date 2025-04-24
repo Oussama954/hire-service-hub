@@ -45,30 +45,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(34.0),
-                      child: CachedNetworkImage(
-                        imageUrl: authProvider.user!.profilePicture!,
-                        fit: BoxFit.cover,
-                        placeholder: (context, url) => const Center(
-                          child: SizedBox(
-                            width: 40.0,
-                            height: 40.0,
-                            child: CircularProgressIndicator(
-                              color: Colors.black,
-                            ),
-                          ),
-                        ),
-                        errorWidget: (context, url, error) {
-                          // Print the error to debug
-                          debugPrint('Image load error: $error');
-                          return Image.asset('assets/images/default-user.jpg');
-                        },
-                      ),
+                      child: authProvider.user?.profilePicture != null
+                          ? CachedNetworkImage(
+                              imageUrl: authProvider.user!.profilePicture!,
+                              fit: BoxFit.cover,
+                              placeholder: (context, url) => const Center(
+                                child: SizedBox(
+                                  width: 40.0,
+                                  height: 40.0,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ),
+                              errorWidget: (context, url, error) {
+                                debugPrint('Image load error: $error');
+                                return Image.asset('assets/images/default-user.jpg');
+                              },
+                            )
+                          : Image.asset('assets/images/default-user.jpg'),
                     ),
                   ),
                   const SizedBox(height: 10),
                   Text(
-                    '${authProvider.user!.firstName} ${authProvider.user!.lastName}',
-                    //'Frank Martin',
+                    authProvider.user != null
+                        ? '${authProvider.user!.firstName ?? ''} ${authProvider.user!.lastName ?? ''}'
+                        : 'Guest User',
                     style: const TextStyle(
                         fontSize: 18, fontWeight: FontWeight.w700),
                   ),
@@ -138,13 +140,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           fontWeight: FontWeight.bold,
                           color: AppTheme.fMainColor),
                     ),
-                    trailing: Switch(
-                      value:
-                          authProvider.user!.role!.title == "service_provider"
-                              ? true
-                              : false,
-                      onChanged: (value) async {
-                        await authProvider.switchRole();
+                    trailing: Selector<AuthenticationProvider, String?>(
+                      selector: (_, provider) => provider.user?.role?.title,
+                      builder: (context, roleTitle, child) {
+                        final isSeller = roleTitle == "service_provider";
+                        return Switch(
+                          value: isSeller,
+                          onChanged: (value) async {
+                            if (value != isSeller) {
+                              final statusCode = await Provider.of<AuthenticationProvider>(context, listen: false).switchRole();
+                              if (statusCode == 200 && context.mounted) {
+                                showCustomSnackBar(
+                                  context,
+                                  "Role switched successfully!",
+                                  Colors.green,
+                                );
+                              }
+                            }
+                          },
+                        );
                       },
                     ),
                   ),
@@ -201,9 +215,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               Colors.red);
                         } else {
                           Navigator.of(context).push(
-                            SlidePageRoute(
-                              page: const MyServicesScreen(),
-                            ),
+                            SlidePageRoute(page: const MyServicesScreen()),
                           );
                         }
                       },

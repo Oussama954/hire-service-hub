@@ -4,6 +4,9 @@ import 'package:e_commerce/common/slide_page_routes/slide_page_route.dart';
 import 'package:e_commerce/common/text_form_fields/custom_text_form_field.dart';
 import 'package:e_commerce/providers/authentication/authentication_provider.dart';
 import 'package:e_commerce/providers/authentication/login_provider.dart';
+import 'package:e_commerce/providers/category/category_provider.dart';
+import 'package:e_commerce/providers/orders/orders_provider.dart';
+import 'package:e_commerce/providers/service/service_provider.dart';
 import 'package:e_commerce/screens/authentication/forget_password_screens/forget_password_screen.dart';
 import 'package:e_commerce/screens/authentication/opt_verification_screen/opt_verification_screen.dart';
 import 'package:e_commerce/screens/authentication/register_screen/register_screen.dart';
@@ -174,6 +177,10 @@ class _LoginScreenState extends State<LoginScreen> {
                               );
 
                               if (statusCode == 200) {
+                                // Clear/reset other relevant providers to avoid stale data
+                                Provider.of<ServiceProvider>(context, listen: false).clearServicesList();
+                                Provider.of<OrderProvider>(context, listen: false).clearOrders();
+                                Provider.of<CategoryProvider>(context, listen: false).resetCategories();
                                 loginProvider.clearControllers();
                                 // Login successful, navigate to the BottomNavigationBarScreen
                                 Navigator.of(context).pushAndRemoveUntil(
@@ -199,7 +206,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     "Unknown User! No user is registered with this email.",
                                     Colors.red);
                               } else if (statusCode == 403) {
-                                // User already logged in
+                                // User not verified
                                 showCustomSnackBar(
                                   context,
                                   "User not verified. Please enter your OTP Code.",
@@ -207,8 +214,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                 );
                                 Navigator.of(context).pushReplacement(
                                   SlidePageRoute(
-                                    page: const OptVerificationScreen(
-                                      email: "",
+                                    page: OptVerificationScreen(
+                                      email: loginProvider.emailController.text,
                                     ),
                                   ),
                                 );
@@ -222,7 +229,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 // Handle any other status codes
                                 showCustomSnackBar(
                                     context,
-                                    "Failed to login. Please try again. $statusCode",
+                                    "Failed to login. Please try again. Error code: $statusCode",
                                     Colors.red);
                               }
                             }

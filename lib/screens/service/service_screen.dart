@@ -2,6 +2,7 @@
 
 import 'package:e_commerce/models/category/category.dart';
 import 'package:e_commerce/providers/category/category_provider.dart';
+import 'package:e_commerce/providers/city/city_provider.dart';
 import 'package:e_commerce/providers/service/service_filter_provider.dart';
 import 'package:e_commerce/providers/service/service_provider.dart';
 import 'package:e_commerce/screens/service/widgets/custom_chip_wiget_for_filtering.dart';
@@ -23,7 +24,13 @@ class _ServiceScreenState extends State<ServiceScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // Load categories and cities from server immediately and await completion
+      await Future.wait([
+        Provider.of<CategoryProvider>(context, listen: false).fetchCategories(),
+        Provider.of<CityProvider>(context, listen: false).fetchCities(),
+      ]);
+      
       final filterProvider =
           Provider.of<FilterProvider>(context, listen: false);
 
@@ -74,7 +81,7 @@ class _ServiceScreenState extends State<ServiceScreen> {
                   Provider.of<ServiceProvider>(context, listen: false)
                       .fetchFilterServices(
                     categoryId: filters['CategoryID'],
-                    city: filters['City'],
+                    cityId: filters['CityID'],
                     priceRangetype: filters['Price'],
                   );
                 });
@@ -97,7 +104,7 @@ class _ServiceScreenState extends State<ServiceScreen> {
                       filterProvider,
                       isDarkMode,
                       "City",
-                      Provider.of<ServiceProvider>(context, listen: false)
+                      Provider.of<CityProvider>(context, listen: false)
                           .cityNames,
                     ),
                     const SizedBox(width: 10),

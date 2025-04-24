@@ -6,6 +6,7 @@ class FilterProvider extends ChangeNotifier {
     'Category': null,
     'CategoryID': null,
     'City': null,
+    'CityID': null,
     'Price': null,
   };
 
@@ -13,6 +14,7 @@ class FilterProvider extends ChangeNotifier {
     'Category': false,
     'CategoryID': false,
     'City': false,
+    'CityID': false,
     'Price': false,
   };
 

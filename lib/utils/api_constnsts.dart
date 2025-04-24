@@ -1,9 +1,9 @@
 class Constants {
-  static const String baseUrl = 'http://192.168.100.21:4000';
+  static const String baseUrl = 'http://192.168.1.6:4000';
   static const String userApiPath = '/api/auth';
   static const String userCategory = '/api/category';
   static const String userApiService = '/api/service';
-  static const String userApiBookingOrder = '/api/order';
+  static const String userApiBookingOrder = '/api/bookings';
   static const String conversation = '/api/conversation';
   static const String messages = '/api/message';
 }

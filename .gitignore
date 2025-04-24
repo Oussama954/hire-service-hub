@@ -39,7 +39,38 @@ app.*.symbols
 # Obfuscation related
 app.*.map.json
 
-# Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
+# Android Studio build artifacts
+/android/app/debug/
+/android/app/profile/
+/android/app/release/
+**/android/**/build/
+/android/**/captures/
+/android/**/intermediates/
+/android/**/outputs/
+/android/**/incremental/
+/android/**/generated/
+
+# Flutter debug files
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+*.flutter-plugins
+*.flutter-plugins-dependencies
+*.flutter-plugins-dependencies
+*.metadata
+
+# Node.js related
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+pnpm-debug.log
+package-lock.json
+yarn.lock
+.env
+.env.*.local
+.nyc_output/
+coverage/
+dist/
+.cache/
+android/app/.cxx/

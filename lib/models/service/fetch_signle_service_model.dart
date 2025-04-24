@@ -153,33 +153,27 @@ class SpecificService {
 
   factory SpecificService.fromJson(Map<String, dynamic> json) =>
       SpecificService(
-        id: json["id"],
-        serviceName: json["service_name"],
-        description: json["description"],
-        userId: json["user_id"],
-        categoryId: json["category_id"],
-        price: json["price"],
-        isAvailable: json["is_available"],
-        coverPhoto: json["cover_photo"] != null
-            ? "${Constants.baseUrl}${json["cover_photo"]}"
+        id: json["id"]?.toString() ?? "",
+        serviceName: json["serviceName"] ?? json["service_name"] ?? "",
+        description: json["description"] ?? "",
+        userId: json["userId"]?.toString() ?? json["user_id"]?.toString() ?? "",
+        categoryId: json["categoryId"]?.toString() ?? json["category_id"]?.toString() ?? "",
+        price: json["price"]?.toString() ?? "0",
+        isAvailable: json["isAvailable"] ?? true,
+        coverPhoto: json["coverPhoto"] ?? '',
+        startTime: json["startTime"] is String && json["startTime"] != null && json["startTime"].isNotEmpty
+            ? DateTime.tryParse(json["startTime"])
             : null,
-        startTime: json["start_time"] == null
-            ? null
-            : DateTime.parse(json["start_time"]),
-        endTime:
-            json["end_time"] == null ? null : DateTime.parse(json["end_time"]),
-        city: json["city"],
+        endTime: json["endTime"] is String && json["endTime"] != null && json["endTime"].isNotEmpty
+            ? DateTime.tryParse(json["endTime"])
+            : null,
+        city: json["city"] ?? "",
         user: json["user"] == null ? null : User.fromJson(json["user"]),
-        category: json["category"] == null
-            ? null
-            : Category.fromJson(json["category"]),
-        reviews: json['reviews'] != null
-            ? List<Review>.from(
-                json['reviews'].map(
-                  (review) => Review.fromJson(review),
-                ),
-              )
-            : [],
+        category: json["category"] == null ? null : Category.fromJson(json["category"]),
+        reviews: json["reviews"] == null
+            ? []
+            : List<Review>.from(
+                (json["reviews"] as List).map((x) => Review.fromJson(x))),
       );
 
   Map<String, dynamic> toJson() => {
@@ -221,13 +215,15 @@ class Review {
   });
 
   factory Review.fromJson(Map<String, dynamic> json) => Review(
-        id: json["id"],
-        reviewerId: json["reviewer_id"],
-        serviceId: json["service_id"],
-        reviewMessage: json["review_message"],
-        rating: json["rating"],
-        addedAt: DateTime.parse(json["added_at"]),
-        reviewer: Reviewer.fromJson(json["reviewer"]),
+        id: json["id"]?.toString() ?? '',
+        reviewerId: json["reviewer_id"]?.toString() ?? '',
+        serviceId: json["service_id"]?.toString() ?? '',
+        reviewMessage: json["review_message"] ?? json["comment"] ?? '',
+        rating: json["rating"] is int ? json["rating"] : int.tryParse(json["rating"].toString()) ?? 0,
+        addedAt: json["added_at"] != null && json["added_at"].toString().isNotEmpty
+            ? DateTime.tryParse(json["added_at"].toString()) ?? DateTime(1970)
+            : DateTime(1970),
+        reviewer: json["reviewer"] != null ? Reviewer.fromJson(json["reviewer"]) : Reviewer(firstName: '', lastName: '', email: '', profilePicture: ''),
       );
 
   Map<String, dynamic> toJson() => {
@@ -259,7 +255,7 @@ class Reviewer {
         lastName: json["last_name"],
         email: json["email"],
         profilePicture: json['profile_picture'] != null
-            ? "${Constants.baseUrl}${json['profile_picture']}"
+            ? json['profile_picture']
             : 'https://static.vecteezy.com/system/resources/thumbnails/009/292/244/small_2x/default-avatar-icon-of-social-media-user-vector.jpg',
       );
 

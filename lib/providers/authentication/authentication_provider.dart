@@ -9,6 +9,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:convert';
 
 import '../../models/auth/user_model.dart';
+import '../../models/auth/role_model.dart';
 import '../../services/authentication/auth_servcies.dart';
 
 class AuthenticationProvider extends ChangeNotifier {
@@ -490,8 +491,7 @@ class AuthenticationProvider extends ChangeNotifier {
         lastName: _user!.lastName,
         gender: _user!.gender,
         otp: _user!.otp,
-        profilePicture:
-            '${Constants.baseUrl}$profilePictureUrl', // Update profile picture
+        profilePicture: profilePictureUrl, // Use raw URL
         cnic: _user!.cnic,
         address: _user!.address,
         isAdmin: _user!.isAdmin,
@@ -525,8 +525,32 @@ class AuthenticationProvider extends ChangeNotifier {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data['success']) {
-          _user = UserModel.fromJsonGetMyData(data);
-
+          // Store the new token from switch-role
+          if (data['token'] != null) {
+            await AuthService.storeTokens(data['token'], '');
+          }
+          // Optionally update user info if returned
+          if (data['newRole'] != null && _user != null) {
+            _user = UserModel(
+              id: _user!.id,
+              email: _user!.email,
+              phone: _user!.phone,
+              password: _user!.password,
+              firstName: _user!.firstName,
+              lastName: _user!.lastName,
+              gender: _user!.gender,
+              otp: _user!.otp,
+              profilePicture: _user!.profilePicture,
+              cnic: _user!.cnic,
+              address: _user!.address,
+              isAdmin: _user!.isAdmin,
+              isVerified: _user!.isVerified,
+              roleId: _user!.roleId,
+              isComplete: _user!.isComplete,
+              bio: _user!.bio,
+              role: Roles(title: data['newRole']),
+            );
+          }
           notifyListeners();
           return 200; // Success
         }

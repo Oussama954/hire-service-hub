@@ -38,7 +38,6 @@ class ServiceProvider with ChangeNotifier {
     notifyListeners();
     try {
       _services = await serviceRepository.getServices();
-      _cityNames = _services.map((service) => service.city).toSet().toList();
       _isFilterApplied = false;
       _isLoading = false;
       notifyListeners();
@@ -90,20 +89,34 @@ class ServiceProvider with ChangeNotifier {
 // Fetch services based on filters
   Future<void> fetchFilterServices({
     String? categoryId,
-    String? city,
+    String? cityId,
     String? priceRangetype,
   }) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
     try {
-      _filterServices = await serviceRepository.getFilterServices(
-        categoryId: categoryId,
-        city: city,
-        priceRangeType: priceRangetype,
-      );
-      _isFilterApplied = _filterServices
-          .isNotEmpty; // Enable filtered view only if data exists
+      // Check if any filters are applied
+      bool hasFilters = (categoryId != null && categoryId.isNotEmpty) || 
+                        (cityId != null && cityId.isNotEmpty) || 
+                        (priceRangetype != null && priceRangetype.isNotEmpty);
+      
+      // Set filter flag based on whether filters were applied, not results
+      _isFilterApplied = hasFilters;
+      
+      if (hasFilters) {
+        // Only call filter API if filters are applied
+        _filterServices = await serviceRepository.getFilterServices(
+          categoryId: categoryId,
+          cityId: cityId,
+          priceRangeType: priceRangetype,
+        );
+        print('Filter applied with results: ${_filterServices.length}');
+      } else {
+        // If no filters, use all services
+        _filterServices = _services;
+        _isFilterApplied = false;
+      }
     } catch (e) {
       _errorMessage = e.toString();
     } finally {
@@ -131,10 +144,12 @@ class ServiceProvider with ChangeNotifier {
 
   XFile? _coverPhoto;
   String _selectedCategory = '';
+  String _selectedCity = '';
   bool _isAvailable = false;
 
   XFile? get coverPhoto => _coverPhoto;
   String get selectedCategory => _selectedCategory;
+  String get selectedCity => _selectedCity;
   bool get isAvailable => _isAvailable;
 
   void setCoverPhoto(XFile photo) {
@@ -144,6 +159,11 @@ class ServiceProvider with ChangeNotifier {
 
   void setCategory(String category) {
     _selectedCategory = category;
+    notifyListeners();
+  }
+
+  void setCity(String city) {
+    _selectedCity = city;
     notifyListeners();
   }
 
@@ -256,6 +276,7 @@ class ServiceProvider with ChangeNotifier {
     endTimeController.clear();
     _coverPhoto = null;
     _selectedCategory = '';
+    _selectedCity = '';
     _isAvailable = false;
     notifyListeners();
   }

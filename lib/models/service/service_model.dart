@@ -6,62 +6,64 @@ class ServiceModel {
   final String description;
   final String? userId;
   final String? categoryId;
-  final String price;
-  final bool isAvailable;
-  final String city;
+  final dynamic price;
+  final bool? isAvailable;
+  final String? city;
   final String? coverPhoto;
-  final String startTime;
-  final String endTime;
-  final User user;
+  final String? startTime;
+  final String? endTime;
+  final User? user;
 
   ServiceModel({
     required this.id,
     required this.serviceName,
     required this.description,
-    this.categoryId,
     this.userId,
-    required this.price,
-    required this.isAvailable,
-    required this.city,
-    required this.startTime,
-    required this.endTime,
-    required this.user,
-    required this.coverPhoto,
+    this.categoryId,
+    this.price,
+    this.isAvailable,
+    this.city,
+    this.coverPhoto,
+    this.startTime,
+    this.endTime,
+    this.user,
   });
 
   factory ServiceModel.fromJson(Map<String, dynamic> json) {
     return ServiceModel(
-      id: json['id'],
-      serviceName: json['service_name'],
-      description: json['description'],
-      price: json['price'],
+      id: json['id'] ?? '',
+      serviceName: json['service_name'] ?? '',
+      description: json['description'] ?? '',
+      userId: json['user_id'],
+      categoryId: json['category_id'],
+      price: json['price']?.toString(),
       isAvailable: json['is_available'],
       city: json['city'],
-      coverPhoto: json["cover_photo"] != null
+      coverPhoto: json["cover_photo"]/* != null
           ? "${Constants.baseUrl}/${json["cover_photo"]}"
-          : null,
+          : null*/,
       startTime: json['start_time'],
       endTime: json['end_time'],
-      user: User.fromJson(json['user']),
+      user: json['user'] != null ? User.fromJson(json['user']) : null,
     );
   }
 
   factory ServiceModel.fromJsonGetMyServices(Map<String, dynamic> json) {
     return ServiceModel(
-      id: json['id'],
-      serviceName: json['service_name'],
-      description: json['description'],
+      id: json['id'] ?? '',
+      serviceName: json['service_name'] ?? '',
+      description: json['description'] ?? '',
       userId: json['user_id'],
       categoryId: json['category_id'],
-      price: json['price'],
+      price: json['price']?.toString(),
       isAvailable: json['is_available'],
       city: json['city'],
-      coverPhoto: json["cover_photo"] != null
+      coverPhoto: json["cover_photo"] /*!= null
           ? "${Constants.baseUrl}/${json["cover_photo"]}"
-          : null,
+          : null*/,
       startTime: json['start_time'],
       endTime: json['end_time'],
-      user: User.fromJson(json['user']),
+      user: json['user'] != null ? User.fromJson(json['user']) : null,
     );
   }
 
@@ -70,7 +72,7 @@ class ServiceModel {
     String? id,
     String? serviceName,
     String? description,
-    String? price,
+    dynamic price,
     bool? isAvailable,
     String? city,
     String? coverPhoto,
@@ -94,14 +96,14 @@ class ServiceModel {
 }
 
 class User {
-  final String firstName;
-  final String lastName;
+  final String? firstName;
+  final String? lastName;
   final String? profilePicture;
 
   User({
-    required this.firstName,
-    required this.lastName,
-    required this.profilePicture,
+    this.firstName,
+    this.lastName,
+    this.profilePicture,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {

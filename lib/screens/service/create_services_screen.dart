@@ -3,6 +3,7 @@ import 'package:e_commerce/common/snakbar/custom_snakbar.dart';
 import 'package:e_commerce/common/text_form_fields/custom_text_form_field.dart';
 import 'package:e_commerce/models/service/create_service_model.dart';
 import 'package:e_commerce/providers/category/category_provider.dart';
+import 'package:e_commerce/providers/city/city_provider.dart';
 import 'package:e_commerce/providers/service/service_provider.dart';
 import 'package:e_commerce/utils/bottom_sheet_helpers.dart';
 import 'package:flutter/material.dart';
@@ -22,15 +23,18 @@ class CreateServiceScreen extends StatefulWidget {
 class _CreateServiceScreenState extends State<CreateServiceScreen> {
   DateTime? _startTime;
   DateTime? _endTime;
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final categoryProvider =
-          Provider.of<CategoryProvider>(context, listen: false);
-
-      categoryProvider.fetchCategories();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // Load both categories and cities simultaneously
+      await Future.wait([
+        Provider.of<CategoryProvider>(context, listen: false).fetchCategories(),
+        Provider.of<CityProvider>(context, listen: false).fetchCities(),
+      ]);
+      
       Provider.of<ServiceProvider>(context, listen: false)
           .resetCreateServiceValues();
     });
@@ -62,6 +66,7 @@ class _CreateServiceScreenState extends State<CreateServiceScreen> {
     Brightness brightness = Theme.of(context).brightness;
     bool isDarkMode = brightness == Brightness.dark;
     final ImagePicker picker = ImagePicker();
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -73,8 +78,8 @@ class _CreateServiceScreenState extends State<CreateServiceScreen> {
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: SingleChildScrollView(
-          child: Consumer2<ServiceProvider, CategoryProvider>(
-            builder: (context, serviceProvider, categoryProvider, child) {
+          child: Consumer3<ServiceProvider, CategoryProvider, CityProvider>(
+            builder: (context, serviceProvider, categoryProvider, cityProvider, child) {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -124,46 +129,99 @@ class _CreateServiceScreenState extends State<CreateServiceScreen> {
                   const SizedBox(
                     height: 16,
                   ),
-                  InkWell(
-                    onTap: () => openFilterBottomSheet(
-                        title: "Select a Category",
-                        context: context,
-                        options: categoryProvider.categoryNames,
-                        onSelect: (String? value) {
-                          serviceProvider.setCategory(value!);
-                          Navigator.pop(context);
-                        },
-                        onReset: () {
-                          serviceProvider.setCategory('');
-                          Navigator.pop(context);
-                        }),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16.0, vertical: 12.0),
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                            width: 0.5,
-                            color: isDarkMode ? Colors.white : Colors.black),
-                        color: isDarkMode
-                            ? ThemeData.dark().scaffoldBackgroundColor
-                            : Colors.white,
-                        borderRadius: BorderRadius.circular(8.0),
-                      ),
-                      child: Text(
-                        serviceProvider.selectedCategory.isEmpty
-                            ? 'Select a Category'
-                            : serviceProvider.selectedCategory,
-                        style: TextStyle(
-                          color: isDarkMode
-                              ? Colors.white
-                              : serviceProvider.selectedCategory != "" &&
-                                      serviceProvider
-                                          .selectedCategory.isNotEmpty
-                                  ? Colors.black
-                                  : Colors.grey.shade500,
+                  // Category and City selection in the same row
+                  Row(
+                    children: [
+                      // Category selection
+                      Expanded(
+                        child: InkWell(
+                          onTap: () => openFilterBottomSheet(
+                              title: "Select a Category",
+                              context: context,
+                              options: categoryProvider.categoryNames,
+                              onSelect: (String? value) {
+                                serviceProvider.setCategory(value!);
+                                Navigator.pop(context);
+                              },
+                              onReset: () {
+                                serviceProvider.setCategory('');
+                                Navigator.pop(context);
+                              }),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16.0, vertical: 12.0),
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                  width: 0.5,
+                                  color: isDarkMode ? Colors.white : Colors.black),
+                              color: isDarkMode
+                                  ? ThemeData.dark().scaffoldBackgroundColor
+                                  : Colors.white,
+                              borderRadius: BorderRadius.circular(8.0),
+                            ),
+                            child: Text(
+                              serviceProvider.selectedCategory.isEmpty
+                                  ? 'Select a Category'
+                                  : serviceProvider.selectedCategory,
+                              style: TextStyle(
+                                color: isDarkMode
+                                    ? Colors.white
+                                    : serviceProvider.selectedCategory != "" &&
+                                            serviceProvider
+                                                .selectedCategory.isNotEmpty
+                                        ? Colors.black
+                                        : Colors.grey.shade500,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+                      const SizedBox(width: 12),
+                      // City selection
+                      Expanded(
+                        child: InkWell(
+                          onTap: () => openFilterBottomSheet(
+                              title: "Select a City",
+                              context: context,
+                              options: cityProvider.cityNames,
+                              onSelect: (String? value) {
+                                serviceProvider.setCity(value!);
+                                Navigator.pop(context);
+                              },
+                              onReset: () {
+                                serviceProvider.setCity('');
+                                Navigator.pop(context);
+                              }),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16.0, vertical: 12.0),
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                  width: 0.5,
+                                  color: isDarkMode ? Colors.white : Colors.black),
+                              color: isDarkMode
+                                  ? ThemeData.dark().scaffoldBackgroundColor
+                                  : Colors.white,
+                              borderRadius: BorderRadius.circular(8.0),
+                            ),
+                            child: Text(
+                              serviceProvider.selectedCity.isEmpty
+                                  ? 'Select a City'
+                                  : serviceProvider.selectedCity,
+                              style: TextStyle(
+                                color: isDarkMode
+                                    ? Colors.white
+                                    : serviceProvider.selectedCity != "" &&
+                                            serviceProvider
+                                                .selectedCity.isNotEmpty
+                                        ? Colors.black
+                                        : Colors.grey.shade500,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(
                     height: 12,
@@ -278,54 +336,91 @@ class _CreateServiceScreenState extends State<CreateServiceScreen> {
                   ),
                   const SizedBox(height: 10.0),
                   // Save Button
-                  SizedBox(
-                    width: double.infinity,
-                    child: CustomGradientButton(
-                      onPressed: () async {
-                        if (_validateInputs(serviceProvider)) {
-                          final serviceData = CreateService(
-                            serviceName:
-                                serviceProvider.nameController.text.trim(),
-                            description: serviceProvider
-                                .descriptionController.text
-                                .trim(),
-                            price: int.parse(serviceProvider
-                                .priceController.text
-                                .trim()
-                                .toString()),
-                            startTime: _startTime.toString(),
-                            endTime: _endTime.toString(),
-                            categoryId: categoryProvider.getCategoryIdByName(
-                                serviceProvider.selectedCategory),
-                            isAvailable: serviceProvider.isAvailable,
-                          );
+                  Stack(
+                    children: [
+                      // Adding modal blocker when loading
+                      if (_isLoading)
+                        Positioned.fill(
+                          child: Container(
+                            color: Colors.black.withOpacity(0.3),
+                            child: const Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                          ),
+                        ),
+                      SizedBox(
+                        width: double.infinity,
+                        child: CustomGradientButton(
+                          isLoading: _isLoading,
+                          onPressed: _isLoading ? null : () async {
+                            if (_validateInputs(serviceProvider)) {
+                              // Set loading state
+                              setState(() {
+                                _isLoading = true;
+                              });
+                              
+                              try {
+                                final serviceData = CreateService(
+                                  serviceName:
+                                      serviceProvider.nameController.text.trim(),
+                                  description: serviceProvider
+                                      .descriptionController.text
+                                      .trim(),
+                                  price: int.parse(serviceProvider
+                                      .priceController.text
+                                      .trim()
+                                      .toString()),
+                                  startTime: _startTime.toString(),
+                                  endTime: _endTime.toString(),
+                                  categoryId: categoryProvider.getCategoryIdByName(
+                                      serviceProvider.selectedCategory),
+                                  cityId: cityProvider.getCityIdByName(
+                                      serviceProvider.selectedCity),
+                                  city: serviceProvider.selectedCity,
+                                  isAvailable: serviceProvider.isAvailable,
+                                );
 
-                          bool result =
-                              await serviceProvider.createServiceWithCoverPhoto(
-                            serviceData,
-                            serviceProvider.coverPhoto!.path,
-                          );
+                                bool result =
+                                    await serviceProvider.createServiceWithCoverPhoto(
+                                  serviceData,
+                                  serviceProvider.coverPhoto!.path,
+                                );
 
-                          if (result) {
-                            showCustomSnackBar(context,
-                                "Service Created Successfully!", Colors.green);
-                            Navigator.pop(context);
-                          } else {
-                            showCustomSnackBar(
-                                context,
-                                serviceProvider.errorMessage ??
-                                    "Unknown error occurred.",
-                                Colors.red);
-                          }
-                        } else {
-                          showCustomSnackBar(
-                              context,
-                              'Please fill all fields and add a cover photo.',
-                              Colors.red);
-                        }
-                      },
-                      text: "Save Service",
-                    ),
+                                if (result) {
+                                  showCustomSnackBar(context,
+                                      "Service Created Successfully!", Colors.green);
+                                  Navigator.pop(context);
+                                } else {
+                                  showCustomSnackBar(
+                                      context,
+                                      serviceProvider.errorMessage ??
+                                          "Unknown error occurred.",
+                                      Colors.red);
+                                }
+                              } catch (e) {
+                                showCustomSnackBar(
+                                    context,
+                                    'An error occurred: ${e.toString()}',
+                                    Colors.red);
+                              } finally {
+                                // Reset loading state if we're still mounted
+                                if (mounted) {
+                                  setState(() {
+                                    _isLoading = false;
+                                  });
+                                }
+                              }
+                            } else {
+                              showCustomSnackBar(
+                                  context,
+                                  'Please fill all fields and add a cover photo.',
+                                  Colors.red);
+                            }
+                          },
+                          text: "Save Service",
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               );
@@ -344,6 +439,7 @@ class _CreateServiceScreenState extends State<CreateServiceScreen> {
         serviceProvider.priceController.text.trim().isNotEmpty &&
         serviceProvider.startTimeController.text.trim().isNotEmpty &&
         serviceProvider.endTimeController.text.trim().isNotEmpty &&
-        serviceProvider.selectedCategory.isNotEmpty;
+        serviceProvider.selectedCategory.isNotEmpty &&
+        serviceProvider.selectedCity.isNotEmpty;
   }
 }

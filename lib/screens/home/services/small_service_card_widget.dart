@@ -36,27 +36,49 @@ class SmallServiceCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Cover Image (Smaller height)
-            service.coverPhoto != null && service.coverPhoto!.isNotEmpty
+            (service.coverPhoto?.trim().isNotEmpty ?? false)
                 ? ClipRRect(
                     borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(16),
                         topRight: Radius.circular(16)),
                     child: Image.network(
-                      '${service.coverPhoto}',
+                      service.coverPhoto!.trim(),
                       width: double.infinity,
                       height: 100, // Reduced height
                       fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) =>
+                          Container(
+                            width: double.infinity,
+                            height: 100,
+                            color: Colors.grey[200],
+                            child: const Icon(Icons.broken_image, size: 40),
+                          ),
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Center(child: CircularProgressIndicator());
+                      },
                     ),
                   )
                 : ClipRRect(
                     borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(16),
                         topRight: Radius.circular(16)),
-                    child: Image.asset(
-                      'assets/images/content-writer.webp', // Placeholder cover image from assets
+                    child: Image.network(
+                      'https://via.placeholder.com/300x100.png?text=No+Image', // Fallback network image
                       width: double.infinity,
                       height: 100, // Reduced height
                       fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) =>
+                          Container(
+                            width: double.infinity,
+                            height: 100,
+                            color: Colors.grey[200],
+                            child: const Icon(Icons.broken_image, size: 40),
+                          ),
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Center(child: CircularProgressIndicator());
+                      },
                     ),
                   ),
             // Service Details (Smaller fonts)

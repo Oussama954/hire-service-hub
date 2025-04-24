@@ -4,6 +4,7 @@ import 'package:e_commerce/utils/api_constnsts.dart';
 import 'package:e_commerce/utils/device_info/get_device_info.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert' show utf8, base64Url;
 
 class AuthService {
   // Keys for accessing tokens in SharedPreferences
@@ -121,15 +122,23 @@ class AuthService {
     });
 
     try {
+      print('Making login request to: $url');
+      print('Request body: $body');
+      
       final response = await http.post(
         url,
         headers: _generateHeaders(),
         body: body,
       );
-      return response; // Returning the http.Response
+      
+      print('Login response status code: ${response.statusCode}');
+      print('Login response headers: ${response.headers}');
+      print('Login response body: ${response.body}');
+      
+      return response;
     } catch (e) {
       print('Error during login: $e');
-      throw Exception('Failed to login user');
+      throw Exception('Failed to login user: $e');
     }
   }
 
@@ -407,39 +416,94 @@ class AuthService {
     return prefs.getString('fcm_token');
   }
 
-  Future<void> sendFCMTokenToBackend() async {
+  Future<http.Response> sendFCMTokenToBackend() async {
     try {
       final String? deviceId = await getDeviceId();
       final accessToken = await getAccessToken();
-      final fcmToken =
-          await getFcmToken(); // Ensure this returns a resolved String value
+      final fcmToken = await getFcmToken();
       final deviceName = Platform.isAndroid ? 'android' : 'ios';
-      print(deviceId);
-      print(fcmToken);
-      if (deviceId == null || fcmToken == null) {
-        throw Exception('Device ID or FCM token is missing.');
+      
+      if (deviceId == null || fcmToken == null || accessToken == null) {
+        throw Exception('Device ID, FCM token, or access token is missing.');
       }
+
+      // Extract user ID from the access token
+      final parts = accessToken.split('.');
+      if (parts.length != 3) {
+        throw Exception('Invalid access token format');
+      }
+
+      // Add padding to base64url string
+      String normalize(String input) {
+        var output = input.replaceAll('-', '+').replaceAll('_', '/');
+        switch (output.length % 4) {
+          case 0:
+            break;
+          case 2:
+            output += '==';
+            break;
+          case 3:
+            output += '=';
+            break;
+          default:
+            throw Exception('Illegal base64url string');
+        }
+        return output;
+      }
+
+      final payload = json.decode(
+        utf8.decode(
+          base64Url.decode(
+            normalize(parts[1])
+          )
+        )
+      );
+      print('Token payload: $payload');
+
+      final userId = payload['userId'];
+      if (userId == null) {
+        throw Exception('User ID not found in access token');
+      }
+
       // Construct the body with resolved values
       final body = {
-        'deviceId': deviceId,
-        'deviceName': deviceName,
-        'fcmToken': fcmToken,
+        'fcm_token': fcmToken,
+        'device_id': deviceId,
+        'device_name': deviceName,
       };
 
+      print('Sending FCM token with body: $body');
+
+      // Use the correct endpoint for FCM token update
+      final url = Uri.parse('${Constants.baseUrl}/api/auth/upsert-fcm-token');
+      print('Making request to: $url');
+
+      // Add user ID to headers
+      final headers = {
+        ..._generateHeaders(accessToken: accessToken),
+        'user-id': userId.toString(),
+      };
+      print('Request headers: $headers');
+
       final response = await http.put(
-        Uri.parse(
-            '${Constants.baseUrl}${Constants.userApiPath}/upsert-fcm-token'),
+        url,
         body: jsonEncode(body),
-        headers: _generateHeaders(accessToken: accessToken),
+        headers: headers,
       );
 
-      if (response.statusCode == 200) {
-        print('FCM token saved successfully.');
-      } else {
-        throw Exception('Error saving FCM token: ${response.body}');
+      print('FCM token response status: ${response.statusCode}');
+      print('FCM token response body: ${response.body}');
+      print('FCM token response headers: ${response.headers}');
+
+      if (response.statusCode != 200) {
+        final errorData = json.decode(response.body);
+        throw Exception(errorData['message'] ?? 'Failed to update FCM token');
       }
+
+      return response;
     } catch (e) {
       print('Error sending FCM token: $e');
+      rethrow;
     }
   }
 

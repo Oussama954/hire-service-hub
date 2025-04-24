@@ -19,13 +19,22 @@ class ServiceService {
 
   Future<List<ServiceModel>> fetchServices() async {
     try {
-      final response = await http
-          .get(Uri.parse("${Constants.baseUrl}${Constants.userApiService}"));
+      String? accessToken = await AuthService.getAccessToken();
+      if (accessToken == null) throw Exception("Access token is missing.");
+
+      final response = await http.get(
+        Uri.parse("${Constants.baseUrl}${Constants.userApiService}"),
+        headers: {
+          'Authorization': 'Bearer $accessToken',
+          'Content-Type': 'application/json',
+        },
+      );
+
       if (response.statusCode == 200) {
         final data = json.decode(response.body)['data'] as List;
         return data.map((service) => ServiceModel.fromJson(service)).toList();
       } else {
-        throw Exception('Failed to load services');
+        throw Exception('Failed to load services: ${response.body}');
       }
     } catch (e) {
       throw Exception('Failed to load services: $e');
@@ -33,11 +42,20 @@ class ServiceService {
   }
 
   Future<FetchSingleService?> fetchSingleService(String serviceId) async {
-    final url =
-        Uri.parse("${Constants.baseUrl}${Constants.userApiService}/$serviceId");
+    String? accessToken = await AuthService.getAccessToken();
+    if (accessToken == null) throw Exception("Access token is missing.");
+
+    final url = Uri.parse("${Constants.baseUrl}${Constants.userApiService}/$serviceId");
 
     try {
-      final response = await http.get(url);
+      final response = await http.get(
+        url,
+        headers: {
+          'Authorization': 'Bearer $accessToken',
+          'Content-Type': 'application/json',
+        },
+      );
+      
       if (response.statusCode == 200) {
         return fetchSingleServiceFromJson(response.body);
       } else {
@@ -53,33 +71,62 @@ class ServiceService {
   // Fetch services based on selected filters
   Future<List<ServiceModel>> fetchFilteredServices({
     String? categoryId,
-    String? city,
+    String? cityId,
     String? priceRangeType,
   }) async {
+    String? accessToken = await AuthService.getAccessToken();
+    if (accessToken == null) throw Exception("Access token is missing.");
+
     // Build query parameters based on selected filters
     final filters = <String, String>{};
-    if (categoryId != null) filters['category_id'] = categoryId;
-    if (city != null) filters['city'] = city;
-    // Add only the selected price range type to the filters
-    if (priceRangeType == "High To Low") {
-      filters['PHTL'] = "true";
-    } else if (priceRangeType == "Low To High") {
-      filters['PLTH'] = "true";
+    if (categoryId != null && categoryId.isNotEmpty) {
+      filters['category_id'] = categoryId;
     }
-    // Build the final URL with query parameters
-    final uri =
-        Uri.parse("${Constants.baseUrl}${Constants.userApiService}/filter")
-            .replace(queryParameters: filters);
+    if (cityId != null && cityId.isNotEmpty) {
+      filters['city_id'] = cityId;
+    }
+    if (priceRangeType != null && priceRangeType.isNotEmpty) {
+      if (priceRangeType == "High To Low") {
+        filters['sort'] = "price_desc";
+      } else if (priceRangeType == "Low To High") {
+        filters['sort'] = "price_asc";
+      }
+    }
+
+    // If no filters are applied, fetch all services
+    if (filters.isEmpty) {
+      return fetchServices();
+    }
+
+    final uri = Uri.parse("${Constants.baseUrl}${Constants.userApiService}/filter")
+        .replace(queryParameters: filters);
+
     try {
-      final response = await http.get(uri);
-      //print(response.body);
+      print('Fetching filtered services with URL: ${uri.toString()}');
+      final response = await http.get(
+        uri,
+        headers: {
+          'Authorization': 'Bearer $accessToken',
+          'Content-Type': 'application/json',
+        },
+      );
+
+      print('Filter response status: ${response.statusCode}');
+      print('Filter response body: ${response.body}');
+
       if (response.statusCode == 200) {
-        final data = json.decode(response.body)['data'] as List;
-        return data.map((service) => ServiceModel.fromJson(service)).toList();
+        final responseData = json.decode(response.body);
+        if (responseData['success'] == true) {
+          final data = responseData['data'] as List;
+          return data.map((service) => ServiceModel.fromJson(service)).toList();
+        } else {
+          throw Exception(responseData['message'] ?? 'Failed to load filter services');
+        }
       } else {
-        throw Exception('Failed to load filter services');
+        throw Exception('Failed to load filter services: ${response.body}');
       }
     } catch (e) {
+      print('Error in fetchFilteredServices: $e');
       throw Exception('Failed to load filter services: $e');
     }
   }

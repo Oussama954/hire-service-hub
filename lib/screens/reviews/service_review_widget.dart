@@ -41,11 +41,18 @@ class ReviewWidget extends StatelessWidget {
                           ? AppTheme.fMainColor
                           : Colors.grey.shade300,
                     ),
-                    child: CircleAvatar(
-                      backgroundImage: CachedNetworkImageProvider(
-                          review.reviewer.profilePicture),
-                      radius: 24,
-                    ),
+                    child: (review.reviewer.profilePicture?.trim().isNotEmpty ?? false)
+                        ? CircleAvatar(
+                            backgroundImage: CachedNetworkImageProvider(
+                              review.reviewer.profilePicture!.trim(),
+                            ),
+                            radius: 24,
+                          )
+                        : CircleAvatar(
+                            backgroundColor: Colors.grey.shade400,
+                            child: Icon(Icons.person, color: Colors.white, size: 24),
+                            radius: 24,
+                          ),
                   ),
                   const SizedBox(width: 10),
                   Column(

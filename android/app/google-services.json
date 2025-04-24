@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "94638179566",
-    "project_id": "hire-service-fe69d",
-    "storage_bucket": "hire-service-fe69d.firebasestorage.app"
+    "project_number": "744754329960",
+    "project_id": "hire-service-74827",
+    "storage_bucket": "hire-service-74827.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:94638179566:android:878a1a010da8c703831fff",
+        "mobilesdk_app_id": "1:744754329960:android:df6416572c7d9dc7073edd",
         "android_client_info": {
           "package_name": "com.gulzarsoft.hireservice"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDMft4_E3DDmBlsk7xtdr0C66Nw-6pqt3k"
+          "current_key": "AIzaSyBS4126-Pr9MDWIFxCLhd9UItn9IUTSoHI"
         }
       ],
       "services": {
