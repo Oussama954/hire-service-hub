@@ -93,7 +93,7 @@ class ReviewWidget extends StatelessWidget {
                             formatDate(review.addedAt.toString()),
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.grey[600],
+                              color: isDarkMode ? Colors.white70 : Colors.grey[600],
                             ),
                           ),
                         ],

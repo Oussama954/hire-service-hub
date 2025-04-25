@@ -32,13 +32,13 @@ class RegisterScreen extends StatelessWidget {
             // Background Image
             Container(
               decoration: BoxDecoration(
-                image: DecorationImage(
-                  image: const AssetImage('assets/background_image.jpg'),
-                  colorFilter: ColorFilter.mode(
-                    Colors.black.withOpacity(0.6), // Darken the image
-                    BlendMode.darken, // Blend mode
-                  ),
-                  fit: BoxFit.cover,
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    AppTheme.primaryColor.withOpacity(0.8),
+                    AppTheme.accentText.withOpacity(0.9),
+                  ],
                 ),
               ),
             ),
@@ -59,12 +59,19 @@ class RegisterScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
                   color: isDarkMode
-                      ? ThemeData.dark().scaffoldBackgroundColor
+                      ? AppTheme.darkSurface
                       : Colors.white,
                   borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(30),
-                    topRight: Radius.circular(30),
+                    topLeft: Radius.circular(40),
+                    topRight: Radius.circular(40),
                   ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 20,
+                      offset: const Offset(0, -5),
+                    ),
+                  ],
                 ),
                 child: Consumer2<AuthenticationProvider, RegistrationProvider>(
                     builder:
@@ -73,17 +80,8 @@ class RegisterScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Title
-                        SizedBox(height: height * 0.01),
-                        Text(
-                          'Sign Up',
-                          style: GoogleFonts.poppins(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w700,
-                            height: 26 / 24,
-                          ),
-                        ),
-                        SizedBox(height: height * 0.02),
+                        // Title removed
+                        SizedBox(height: height * 0.025),
       
                         Form(
                           key: registrationProvider.registerFormKey,
@@ -203,11 +201,28 @@ class RegisterScreen extends StatelessWidget {
                                 ),
                               ),
                               SizedBox(height: height * 0.02),
-                              CustomGradientButton(
-                                text: "Sign Up",
+                              ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppTheme.secondaryColor,
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(AppTheme.radius_md),
+                                  ),
+                                  minimumSize: Size(width * 0.9, 50),
+                                ),
+                                child: Text(
+                                  "Sign Up",
+                                  style: GoogleFonts.inter(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                                 onPressed: () async {
+                                  FocusScope.of(context).unfocus();
+                                  
                                   if (registrationProvider.validateForm()) {
-                                    FocusScope.of(context).unfocus();
                                     final statusCode =
                                         await authProvider.registerUser(
                                       email: registrationProvider
@@ -224,7 +239,7 @@ class RegisterScreen extends StatelessWidget {
                                       lastName: registrationProvider
                                           .lastNameController.text,
                                     );
-      
+
                                     // Handle navigation based on status code
                                     if (statusCode == 200) {
                                       // Navigate to OTP verification screen
@@ -256,7 +271,6 @@ class RegisterScreen extends StatelessWidget {
                                     }
                                   }
                                 },
-                                isLoading: authProvider.isLoading,
                               ),
                             ],
                           ),
@@ -275,11 +289,10 @@ class RegisterScreen extends StatelessWidget {
                             },
                             child: Text(
                               'Login',
-                              style: GoogleFonts.poppins(
+                              style: GoogleFonts.inter(
                                 fontSize: 16,
-                                color: AppTheme.fMainColor,
-                                fontWeight: FontWeight.normal,
-                                height: 22 / 16,
+                                color: AppTheme.secondaryColor,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
                           ),
@@ -332,37 +345,37 @@ TextFormField customPhoneNumberTextFormField(
       label: const Text('Phone Number'),
       labelStyle: TextStyle(
           fontSize: 14,
-          color: isDarkMode ? Colors.white : Colors.grey.shade500),
+          color: isDarkMode ? Colors.white.withOpacity(0.7) : AppTheme.darkGrey),
       fillColor:
-          isDarkMode ? ThemeData.dark().scaffoldBackgroundColor : Colors.white,
+          isDarkMode ? AppTheme.darkSurface : Colors.white,
       filled: true,
       counterText: '',
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       hintStyle: TextStyle(
-        color: isDarkMode ? Colors.white : Colors.black,
+        color: isDarkMode ? Colors.white.withOpacity(0.7) : AppTheme.darkGrey,
         fontSize: 14,
       ),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppTheme.radius_md),
         borderSide: BorderSide(
-            color: isDarkMode ? Colors.white : Colors.black,
-            width: 0.5),
+            color: isDarkMode ? Colors.white.withOpacity(0.2) : Colors.grey.shade300,
+            width: 1),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppTheme.radius_md),
         borderSide: BorderSide(
-            color: isDarkMode ? Colors.white : Colors.black,
-            width: 0.5),
+            color: isDarkMode ? Colors.white.withOpacity(0.2) : Colors.grey.shade300,
+            width: 1),
       ),
       focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.red.shade900, width: 0.5),
+        borderRadius: BorderRadius.circular(AppTheme.radius_md),
+        borderSide: BorderSide(color: Colors.red.shade400, width: 1.5),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppTheme.radius_md),
         borderSide: BorderSide(
-            color: isDarkMode ? Colors.white : Colors.grey.shade500,
-            width: 0.5),
+            color: AppTheme.primaryColor,
+            width: 1.5),
       ),
       prefixIcon: Container(
         padding: const EdgeInsets.fromLTRB(8.0, 14.0, 8.0, 12.0),

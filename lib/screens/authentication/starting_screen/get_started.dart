@@ -20,13 +20,13 @@ class GetStarted extends StatelessWidget {
             // Background Image
             Container(
               decoration: BoxDecoration(
-                image: DecorationImage(
-                  image: const AssetImage('assets/background_image.jpg'),
-                  colorFilter: ColorFilter.mode(
-                    Colors.black.withOpacity(0.6), // Darken the image
-                    BlendMode.darken, // Blend mode
-                  ),
-                  fit: BoxFit.cover,
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    AppTheme.primaryColor.withOpacity(0.8),
+                    AppTheme.accentText.withOpacity(0.9),
+                  ],
                 ),
               ),
             ),
@@ -45,37 +45,65 @@ class GetStarted extends StatelessWidget {
                       const Text(
                         'All services on your fingertips.',
                         style: TextStyle(
-                          fontSize: 30,
+                          fontSize: 32,
                           color: Colors.white,
                           fontWeight: FontWeight.w700,
-                          height: 36 / 30,
+                          letterSpacing: 0.5,
+                          height: 1.2,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Your one-stop service hub for all your needs.',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.white.withOpacity(0.8),
+                          fontWeight: FontWeight.w400,
                         ),
                       ),
                       SizedBox(height: height * 0.07),
                       Row(
                         children: [
                           Expanded(
-                            child: CustomElevatedButton(
-                                borderRadius: 12,
-                                height: 58,
-                                text: "Login",
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    SlidePageRoute(
-                                      page: const LoginScreen(),
-                                    ),
-                                  );
-                                },
-                                backgroundColor: AppTheme.fMainColor,
-                                foregroundColor: Colors.white),
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                foregroundColor: AppTheme.accentText,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(AppTheme.radius_lg),
+                                ),
+                              ),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  SlidePageRoute(
+                                    page: const LoginScreen(),
+                                  ),
+                                );
+                              },
+                              child: const Text(
+                                "Sign In",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
                           ),
                           const SizedBox(width: 16),
                           Expanded(
-                            child: CustomElevatedButton(
-                              borderRadius: 12,
-                              height: 58,
-                              text: "Sign Up",
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.secondaryColor,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(AppTheme.radius_lg),
+                                ),
+                              ),
                               onPressed: () {
                                 Navigator.push(
                                   context,
@@ -84,9 +112,13 @@ class GetStarted extends StatelessWidget {
                                   ),
                                 );
                               },
-                              backgroundColor:
-                                  const Color.fromARGB(255, 51, 49, 51),
-                              foregroundColor: Colors.white,
+                              child: const Text(
+                                "Sign Up",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                             ),
                           ),
                         ],

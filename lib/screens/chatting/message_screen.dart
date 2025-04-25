@@ -160,13 +160,13 @@ class _MessagesScreenState extends State<MessagesScreen> {
                         Text(
                           date,
                           style:
-                              const TextStyle(color: Colors.grey, fontSize: 12),
+                              TextStyle(color: isDarkMode ? Colors.white70 : Colors.grey, fontSize: 12),
                         ),
                         const Text(' - '),
                         Text(
                           time,
                           style:
-                              const TextStyle(color: Colors.grey, fontSize: 12),
+                              TextStyle(color: isDarkMode ? Colors.white70 : Colors.grey, fontSize: 12),
                         ),
                       ],
                     ),

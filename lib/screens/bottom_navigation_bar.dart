@@ -9,7 +9,6 @@ import 'package:e_commerce/utils/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:iconly/iconly.dart';
 import 'package:provider/provider.dart';
-import 'package:badges/badges.dart' as badges;
 
 class BottomNavigationBarScreen extends StatelessWidget {
   const BottomNavigationBarScreen({super.key});
@@ -24,57 +23,142 @@ class BottomNavigationBarScreen extends StatelessWidget {
     return Consumer<AuthenticationProvider>(
         builder: (context, authProvider, child) {
       return Scaffold(
-        bottomNavigationBar: BottomNavigationBar(
-          currentIndex: navigationProvider.currentIndex,
-          type: BottomNavigationBarType.fixed,
-          onTap: (index) async {
-            if (index == 2) {
-              await context
-                  .read<NotificationBadgeProvider>()
-                  .resetCount('order');
-            }
-            navigationProvider.updateIndex(index); // Update index and animate
-          },
-          items: [
-            const BottomNavigationBarItem(
-              icon: Icon(IconlyLight.home),
-              label: 'Home',
+        extendBody: true,
+        bottomNavigationBar: Container(
+          decoration: BoxDecoration(
+            // Removed shadow for a more minimal look like the header
+            color: Theme.of(context).brightness == Brightness.dark 
+              ? Colors.black 
+              : Colors.white,
+          ),
+          child: ClipRRect(
+            // Reduced border radius to be more subtle
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(16),
+              topRight: Radius.circular(16),
             ),
-            const BottomNavigationBarItem(
-              icon: Icon(IconlyLight.category),
-              label: 'Services',
+            child: BottomNavigationBar(
+              elevation: 0,
+              backgroundColor: Theme.of(context).brightness == Brightness.dark 
+                ? Colors.black 
+                : Colors.white,
+              currentIndex: navigationProvider.currentIndex,
+              type: BottomNavigationBarType.fixed,
+              // Exactly match header icons style
+              selectedItemColor: AppTheme.primaryColor,
+              unselectedItemColor: Theme.of(context).brightness == Brightness.dark 
+                ? Colors.white 
+                : Colors.black87,
+              // Keep labels for better usability
+              selectedFontSize: 10,
+              unselectedFontSize: 10,
+              showSelectedLabels: true,
+              showUnselectedLabels: true,
+              onTap: (index) async {
+                if (index == 2) {
+                  await context
+                      .read<NotificationBadgeProvider>()
+                      .resetCount('order');
+                }
+                navigationProvider.updateIndex(index);
+              },
+              items: [
+                BottomNavigationBarItem(
+                  icon: Icon(IconlyLight.home, size: 24), // Standard icon size to match header exactly
+                  activeIcon: Icon(IconlyBold.home, size: 24, color: AppTheme.primaryColor),
+                  label: 'Home',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(IconlyLight.category, size: 24), // Standard icon size to match header exactly
+                  activeIcon: Icon(IconlyBold.category, size: 24, color: AppTheme.primaryColor),
+                  label: 'Services',
+                ),
+                BottomNavigationBarItem(
+                  icon: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Icon(IconlyLight.bag, size: 24), // Standard icon size to match header exactly
+                      if (orderBadgeCount > 0)
+                        Positioned(
+                          right: 2,
+                          top: 2,
+                          child: Container(
+                            padding: const EdgeInsets.all(2),
+                            decoration: BoxDecoration(
+                              color: AppTheme.error, // Using error color to match header badge style
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            constraints: const BoxConstraints(
+                              minWidth: 16,
+                              minHeight: 16,
+                            ),
+                            child: Center(
+                              child: Text(
+                                orderBadgeCount.toString(),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  activeIcon: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Icon(IconlyBold.bag, size: 20, color: AppTheme.primaryColor),
+                      if (orderBadgeCount > 0)
+                        Positioned(
+                          right: 2,
+                          top: 2,
+                          child: Container(
+                            padding: const EdgeInsets.all(2),
+                            decoration: BoxDecoration(
+                              color: AppTheme.error, // Using error color to match header badge style
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            constraints: const BoxConstraints(
+                              minWidth: 16,
+                              minHeight: 16,
+                            ),
+                            child: Center(
+                              child: Text(
+                                orderBadgeCount.toString(),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  label: authProvider.user?.role?.title == "service_provider"
+                      ? 'Orders'
+                      : 'My Orders',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(IconlyLight.profile, size: 24), // Standard icon size to match header exactly
+                  activeIcon: Icon(IconlyBold.profile, size: 24, color: AppTheme.primaryColor),
+                  label: 'Profile',
+                ),
+              ],
             ),
-            BottomNavigationBarItem(
-              icon: orderBadgeCount > 0
-                  ? badges.Badge(
-                      badgeStyle: badges.BadgeStyle(
-                        badgeColor: AppTheme.fMainColor,
-                      ),
-                      badgeContent: Text(
-                        orderBadgeCount.toString(),
-                        style:
-                            const TextStyle(color: Colors.white, fontSize: 12),
-                      ),
-                      child: const Icon(IconlyLight.bag),
-                    )
-                  : const Icon(IconlyLight.bag),
-              label: authProvider.user?.role?.title == "service_provider"
-                  ? 'Orders'
-                  : 'My Orders',
-            ),
-            const BottomNavigationBarItem(
-              icon: Icon(IconlyLight.profile),
-              label: 'Profile',
-            ),
-          ],
+          ),
         ),
         body: PageView(
           controller: navigationProvider.pageController,
           onPageChanged: (index) {
-            navigationProvider.updateIndex(index); // Sync index with PageView
+            navigationProvider.updateIndex(index);
           },
-          physics:
-              const NeverScrollableScrollPhysics(), // Disable swipe if needed
+          physics: const NeverScrollableScrollPhysics(),
           children: const [
             HomeScreen(),
             ServiceScreen(),

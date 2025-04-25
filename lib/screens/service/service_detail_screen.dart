@@ -16,6 +16,7 @@ import 'package:e_commerce/screens/reviews/service_review_widget.dart';
 import 'package:e_commerce/utils/app_theme.dart';
 import 'package:e_commerce/utils/date_and_time_formatting.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
 import 'package:provider/provider.dart';
 
@@ -121,10 +122,15 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
 
       return Scaffold(
         appBar: AppBar(
-            forceMaterialTransparency: true,
-            title: const Text(
+            elevation: 0,
+            backgroundColor: Colors.transparent,
+            title: Text(
               "Service Details",
-              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 20),
+              style: GoogleFonts.inter(
+                fontWeight: FontWeight.w600, 
+                fontSize: 18,
+                color: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.accentText,
+              ),
             ),
             actions: isServiceProvider
                 ? [
@@ -211,99 +217,203 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   service.coverPhoto != null
-                      ? Image.network(
-                          '${service.coverPhoto}',
+                      ? SizedBox(
+                          height: 200, // Reduced height to show more content
                           width: double.infinity,
-                          fit: BoxFit.cover,
+                          child: Image.network(
+                            '${service.coverPhoto}',
+                            fit: BoxFit.cover,
+                          ),
                         )
-                      : Image.asset(
-                          'assets/images/content-writer.webp',
+                      : SizedBox(
+                          height: 200, // Reduced height to match network image
                           width: double.infinity,
-                          height: 250,
-                          fit: BoxFit.cover,
+                          child: Image.asset(
+                            'assets/images/content-writer.webp',
+                            fit: BoxFit.cover,
+                          ),
                         ),
                   const SizedBox(height: 12),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          service.serviceName ?? "No Name",
-                          style: const TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold),
-                        ),
-                        Row(
-                          children: [
-                            const Icon(
-                              IconlyBold.star,
-                              color: Colors.amber,
-                            ),
-                            Text(
-                              serviceProvider.service?.data?.averageRating
-                                      ?.toString() ??
-                                  "0.0",
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Text(
-                      service.description ?? "",
-                      style: const TextStyle(fontSize: 14),
-                    ),
-                  ),
-                  const Divider(),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16),
-                    child: Text(
-                      "Availability",
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(
-                      children: [
-                        const Icon(IconlyLight.location),
-                        const SizedBox(width: 12),
-                        Text(service.city ?? ""),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(
-                      children: [
-                        const Icon(IconlyLight.time_circle),
-                        const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            "${getFormattedTime12Hour(service.startTime.toString())} - ${getFormattedTime12Hour(service.endTime.toString())}",
-                            style: const TextStyle(fontSize: 14),
+                            service.serviceName ?? "No Name",
+                            style: GoogleFonts.inter(
+                              fontSize: 20, 
+                              fontWeight: FontWeight.w700,
+                              color: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.accentText,
+                            ),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).brightness == Brightness.dark ? Colors.amber.withOpacity(0.2) : Colors.amber.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: Colors.amber.withOpacity(0.5)),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                IconlyBold.star,
+                                color: Colors.amber,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                serviceProvider.service?.data?.averageRating?.toString() ?? "0.0",
+                                style: GoogleFonts.inter(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
                   ),
+                  const SizedBox(height: 16),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Text(
+                      service.description ?? "",
+                      style: GoogleFonts.inter(
+                        fontSize: 15,
+                        height: 1.5,
+                        color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : Colors.black87,
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).brightness == Brightness.dark ? Colors.black12 : Colors.grey.shade50,
+                        borderRadius: BorderRadius.circular(AppTheme.radius_lg),
+                        border: Border.all(color: Theme.of(context).brightness == Brightness.dark ? Colors.white10 : Colors.grey.shade200),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Service Information",
+                            style: GoogleFonts.inter(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.accentText,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              const Icon(IconlyLight.location, size: 20),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "Location",
+                                      style: GoogleFonts.inter(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                        color: Theme.of(context).brightness == Brightness.dark ? Colors.white60 : Colors.grey.shade600,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      service.city ?? "Not specified",
+                                      style: GoogleFonts.inter(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                        color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black87,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              const Icon(IconlyLight.time_circle, size: 20),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "Service Hours",
+                                      style: GoogleFonts.inter(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                        color: Theme.of(context).brightness == Brightness.dark ? Colors.white60 : Colors.grey.shade600,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      "${getFormattedTime12Hour(service.startTime.toString())} - ${getFormattedTime12Hour(service.endTime.toString())}",
+                                      style: GoogleFonts.inter(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                        color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black87,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (service.isAvailable == true) ...[  
+                            const SizedBox(height: 16),
+                            Row(
+                              children: [
+                                Icon(IconlyBold.tick_square, size: 20, color: AppTheme.success),
+                                const SizedBox(width: 12),
+                                Text(
+                                  "Available for Booking",
+                                  style: GoogleFonts.inter(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                    color: AppTheme.success,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ] else if (service.isAvailable == false) ...[  
+                            const SizedBox(height: 16),
+                            Row(
+                              children: [
+                                Icon(IconlyBold.close_square, size: 20, color: AppTheme.error),
+                                const SizedBox(width: 12),
+                                Text(
+                                  "Currently Unavailable",
+                                  style: GoogleFonts.inter(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                    color: AppTheme.error,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
                   const Divider(),
 
                   // Reviews Section
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16),
-                    child: Text(
-                      "Reviews",
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                  ),
+                  // Reviews title removed
 
                   Padding(
                     padding: const EdgeInsets.only(left: 16, top: 8),
@@ -398,12 +508,13 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
             bool isDarkMode = brightness == Brightness.dark;
             final price = serviceProvider.service?.data?.specificService?.price;
             return CardyContainer(
-              color: isDarkMode ? AppTheme.fdarkBlue : Colors.white,
+              color: isDarkMode ? AppTheme.darkSurface : Colors.white,
               spreadRadius: 0,
-              blurRadius: 1,
-              shadowColor: isDarkMode ? AppTheme.fdarkBlue : Colors.grey,
+              blurRadius: 8,
+              shadowColor: Colors.black.withOpacity(0.1),
               height: 100,
-              padding: const EdgeInsets.only(right: 20, left: 20, bottom: 20),
+              borderRadius: BorderRadius.circular(AppTheme.radius_lg),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
               child: Row(
                 mainAxisAlignment: isServiceByMe
                     ? MainAxisAlignment.end
@@ -413,15 +524,13 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text(
-                        "Total Price",
-                        style: TextStyle(fontSize: 14, color: Colors.grey),
-                      ),
+                      // Price label removed
                       Text(
                         "Rs${price ?? 'N/A'}",
-                        style: const TextStyle(
-                          fontSize: 20,
+                        style: TextStyle(
+                          fontSize: 22,
                           fontWeight: FontWeight.bold,
+                          color: isDarkMode ? Colors.white : AppTheme.accentText,
                         ),
                       ),
                     ],
@@ -429,37 +538,49 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                   if (!isServiceByMe) ...[
                     Row(
                       children: [
-                        CircleAvatar(
-                          backgroundColor: AppTheme.fMainColor,
-                          radius: 26,
-                          child: Consumer<ChattingProvider>(
-                              builder: (context, chatProvider, child) {
-                            return IconButton(
-                              onPressed: () async {
-                                await handleConversation(
-                                  context,
-                                  chatProvider,
-                                  serviceProvider
-                                      .service!.data!.specificService!.userId!,
-                                  authProvider.user!.id!,
-                                );
-                              },
-                              icon: const Icon(
-                                IconlyLight.chat,
-                                color: Colors.white,
+                        Consumer<ChattingProvider>(
+                            builder: (context, chatProvider, child) {
+                          return ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.primaryColor,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              padding: const EdgeInsets.all(12),
+                              minimumSize: const Size(54, 54),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(AppTheme.radius_circle),
                               ),
-                            );
-                          }),
-                        ),
+                            ),
+                            onPressed: () async {
+                              await handleConversation(
+                                context,
+                                chatProvider,
+                                serviceProvider
+                                    .service!.data!.specificService!.userId!,
+                                authProvider.user!.id!,
+                              );
+                            },
+                            child: const Icon(
+                              IconlyLight.chat,
+                              color: Colors.white,
+                            ),
+                          );
+                        }),
+                        
                         const SizedBox(
-                          width: 5,
+                          width: 4,
                         ),
-                        CustomElevatedButton(
-                          width: 150,
-                          height: 50,
-                          backgroundColor: AppTheme.fMainColor,
-                          foregroundColor: Colors.white,
-                          text: "Book Now!",
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.secondaryColor,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 18),
+                            minimumSize: const Size(150, 50),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(AppTheme.radius_md),
+                            ),
+                          ),
                           onPressed: () {
                             Navigator.push(
                               context,
@@ -471,6 +592,13 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                               ),
                             );
                           },
+                          child: const Text(
+                            "Book Now",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
                       ],
                     )

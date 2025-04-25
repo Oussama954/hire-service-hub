@@ -135,6 +135,44 @@ class ServiceProvider with ChangeNotifier {
     _services = [];
     notifyListeners();
   }
+  
+  // Search functionality
+  String _searchQuery = "";
+  List<ServiceModel> _searchResults = [];
+  bool _isSearching = false;
+  
+  List<ServiceModel> get searchResults => _searchResults;
+  bool get isSearching => _isSearching;
+  
+  void searchServices(String query) {
+    _searchQuery = query.toLowerCase().trim();
+    _isSearching = _searchQuery.isNotEmpty;
+    
+    if (_isSearching) {
+      // If filters are applied, search within filtered services, otherwise search all services
+      final sourceList = _isFilterApplied ? _filterServices : _services;
+      
+      _searchResults = sourceList.where((service) {
+        final nameMatch = service.serviceName?.toLowerCase().contains(_searchQuery) ?? false;
+        final descMatch = service.description?.toLowerCase().contains(_searchQuery) ?? false;
+        // CategoryId is available but we don't have direct access to category title
+        // So we'll just search on name and description
+        
+        return nameMatch || descMatch;
+      }).toList();
+    } else {
+      _searchResults = [];
+    }
+    
+    notifyListeners();
+  }
+  
+  void clearSearch() {
+    _searchQuery = "";
+    _isSearching = false;
+    _searchResults = [];
+    notifyListeners();
+  }
 
   final TextEditingController nameController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
@@ -154,6 +192,11 @@ class ServiceProvider with ChangeNotifier {
 
   void setCoverPhoto(XFile photo) {
     _coverPhoto = photo;
+    notifyListeners();
+  }
+  
+  void clearCoverPhoto() {
+    _coverPhoto = null;
     notifyListeners();
   }
 

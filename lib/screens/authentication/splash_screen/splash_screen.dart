@@ -67,42 +67,89 @@ class _SplashScreenState extends State<SplashScreen> {
   Widget build(BuildContext context) {
     return ProviderNetworkObserver(
       child: Scaffold(
-        body: SafeArea(
-          child: Center(
-            // Center widget to ensure child is in the center
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Green Box with Icon
-                Container(
-                  height: 34, // Height of the green box
-                  width: 34, // Width of the green box
-                  decoration: BoxDecoration(
-                    color: AppTheme.fMainColor, // Green color
-                    borderRadius: BorderRadius.circular(8), // Rounded corners
-                  ),
-                  child: Center(
-                    child: SvgPicture.asset(
-                      'assets/icons/service_icon.svg',
-                      height: 20,
-                      width: 20,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10), // Space between the icon and text
-                // Text "E-Services"
-                Text(
-                  'E-Services',
-                  style: GoogleFonts.archivoBlack(
-                    textStyle: const TextStyle(
-                      fontSize: 25,
-                      fontWeight: FontWeight.w400,
-                      height: 26 / 20,
-                    ),
-                  ),
-                ),
+        body: Container(
+          decoration: BoxDecoration(
+            color: Theme.of(context).brightness == Brightness.dark ? Colors.black : null,
+            gradient: Theme.of(context).brightness == Brightness.dark ? null : LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                AppTheme.primaryColor.withOpacity(0.8),
+                AppTheme.accentText.withOpacity(0.9),
               ],
-            ), // The widgt that should be centered
+            ),
+          ),
+          child: SafeArea(
+            child: Center(
+              // Center widget to ensure child is in the center
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // App Logo
+                  Container(
+                    height: 80, 
+                    width: 80,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(AppTheme.radius_lg),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 10,
+                          spreadRadius: 2,
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: SvgPicture.asset(
+                        'assets/icons/service_icon.svg',
+                        height: 50,
+                        width: 50,
+                        colorFilter: ColorFilter.mode(
+                          AppTheme.secondaryColor, 
+                          BlendMode.srcIn
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  // App Name
+                  Text(
+                    'E-Services',
+                    style: GoogleFonts.inter(
+                      textStyle: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  // Tagline
+                  Text(
+                    'Your One-Stop Service Hub',
+                    style: GoogleFonts.inter(
+                      textStyle: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w400,
+                        color: Colors.white.withOpacity(0.8),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 40),
+                  // Loading indicator
+                  SizedBox(
+                    width: 40,
+                    height: 40,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),

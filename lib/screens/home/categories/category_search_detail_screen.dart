@@ -82,9 +82,9 @@ class _CategorySearchDetailScreenState
                       height: 45,
                       child: Row(
                         children: [
-                          const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 10),
-                            child: Icon(IconlyLight.search, color: Colors.grey),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            child: Icon(IconlyLight.search, color: isDarkMode ? Colors.white70 : Colors.grey),
                           ),
                           Expanded(
                             child: TextField(
@@ -94,11 +94,13 @@ class _CategorySearchDetailScreenState
                                         listen: false)
                                     .searchCategories(value);
                               },
-                              decoration: const InputDecoration(
+                              decoration: InputDecoration(
                                 hintText: 'Search',
                                 border: InputBorder.none,
-                                hintStyle:
-                                    TextStyle(color: Colors.grey, fontSize: 14),
+                                hintStyle: TextStyle(
+                                  color: isDarkMode ? Colors.white70 : Colors.grey,
+                                  fontSize: 14,
+                                ),
                               ),
                             ),
                           ),

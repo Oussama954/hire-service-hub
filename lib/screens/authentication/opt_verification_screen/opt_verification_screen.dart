@@ -44,13 +44,13 @@ class _OptVerificationScreenState extends State<OptVerificationScreen> {
             // Background Image
             Container(
               decoration: BoxDecoration(
-                image: DecorationImage(
-                  image: const AssetImage('assets/background_image.jpg'),
-                  colorFilter: ColorFilter.mode(
-                    Colors.black.withOpacity(0.6), // Darken the image
-                    BlendMode.darken, // Blend mode
-                  ),
-                  fit: BoxFit.cover,
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    AppTheme.primaryColor.withOpacity(0.8),
+                    AppTheme.accentText.withOpacity(0.9),
+                  ],
                 ),
               ),
             ),
@@ -76,12 +76,19 @@ class _OptVerificationScreenState extends State<OptVerificationScreen> {
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
                   color: isDarkMode
-                      ? ThemeData.dark().scaffoldBackgroundColor
+                      ? AppTheme.darkSurface
                       : Colors.white,
                   borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(30),
-                    topRight: Radius.circular(30),
+                    topLeft: Radius.circular(40),
+                    topRight: Radius.circular(40),
                   ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 20,
+                      offset: const Offset(0, -5),
+                    ),
+                  ],
                 ),
                 child: Consumer<AuthenticationProvider>(
                     builder: (context, authProvider, child) {
@@ -89,16 +96,7 @@ class _OptVerificationScreenState extends State<OptVerificationScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Title
-                        SizedBox(height: height * 0.01),
-                        Text(
-                          'OTP Verification',
-                          style: GoogleFonts.poppins(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w700,
-                            height: 26 / 24,
-                          ),
-                        ),
+                        // Title removed
                         SizedBox(height: height * 0.01),
                         Text(
                           "Enter the OTP you received on your given email address ${widget.email}",
@@ -112,10 +110,24 @@ class _OptVerificationScreenState extends State<OptVerificationScreen> {
                         ),
                         SizedBox(height: height * 0.02),
                         PinCodeTextField(
-                          key: _otpFormKey,
                           appContext: context,
-                          length: 6,
-                          cursorHeight: 19,
+                          length: 6, // OTP length
+                          keyboardType: TextInputType.number,
+                          textInputAction: TextInputAction.done,
+                          animationType: AnimationType.fade,
+                          pinTheme: PinTheme(
+                            shape: PinCodeFieldShape.box,
+                            borderRadius: BorderRadius.circular(AppTheme.radius_md),
+                            fieldHeight: 50,
+                            fieldWidth: 40,
+                            activeFillColor: isDarkMode ? AppTheme.darkSurface : Colors.white,
+                            inactiveFillColor: isDarkMode ? AppTheme.darkGrey.withOpacity(0.1) : Colors.grey.shade100,
+                            selectedFillColor: isDarkMode ? AppTheme.darkGrey.withOpacity(0.2) : Colors.grey.shade200,
+                            activeColor: AppTheme.primaryColor,
+                            inactiveColor: Colors.grey.shade300,
+                            selectedColor: AppTheme.secondaryColor,
+                          ),
+                          enableActiveFill: true,
                           onChanged: (value) {
                             setState(() {
                               otp = value;
@@ -123,32 +135,24 @@ class _OptVerificationScreenState extends State<OptVerificationScreen> {
                                   otp.length == 6; // Check if OTP is 6 digits
                             });
                           },
-                          cursorColor: AppTheme.fMainColor,
-                          enableActiveFill: true,
-                          inputFormatters: [
-                            FilteringTextInputFormatter.digitsOnly
-                          ],
-                          pinTheme: PinTheme(
-                            borderWidth: 0,
-                            borderRadius: BorderRadius.circular(8),
-                            fieldHeight: 50,
-                            fieldWidth: 50,
-                            shape: PinCodeFieldShape.box,
-                            inactiveFillColor: Colors.grey.shade200,
-                            selectedColor: Colors.grey.shade200,
-                            selectedFillColor: Colors.grey.shade200,
-                            activeColor: Colors.grey.shade200,
-                            inactiveColor: Colors.grey.shade200,
-                            activeFillColor: Colors.grey.shade200,
-                          ),
                         ),
                         SizedBox(height: height * 0.02),
-                        CustomGradientButton(
-                          text: "Submit",
-                          isLoading:
-                              authProvider.isLoading, // Show loading state
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.secondaryColor,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            minimumSize: Size(width * 0.9, 50),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(AppTheme.radius_md),
+                            ),
+                            disabledBackgroundColor: Colors.grey.shade400,
+                            disabledForegroundColor: Colors.white70,
+                          ),
                           onPressed: isOtpValid
                               ? () async {
+                                  if (authProvider.isLoading) return;
                                   // Call verifyAccount and handle navigation based on the status code
                                   final statusCode =
                                       await authProvider.verifyAccount(
@@ -184,6 +188,22 @@ class _OptVerificationScreenState extends State<OptVerificationScreen> {
                                   }
                                 }
                               : null, // Disable button if OTP is not valid
+                          child: authProvider.isLoading
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : Text(
+                                  "Verify OTP",
+                                  style: GoogleFonts.inter(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                         ),
                         SizedBox(height: height * 0.03),
                         Center(
@@ -200,7 +220,8 @@ class _OptVerificationScreenState extends State<OptVerificationScreen> {
                                   text: "Request New",
                                   style: TextStyle(
                                     fontSize: 16,
-                                    color: AppTheme.fMainColor,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppTheme.secondaryColor,
                                   ),
                                   recognizer: TapGestureRecognizer()
                                     ..onTap = () async {
