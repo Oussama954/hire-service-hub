@@ -19,6 +19,45 @@ class AuthService {
     await prefs.setString(refreshTokenKey, refreshToken);
   }
 
+  // Get user data from JWT token
+  static Future<Map<String, dynamic>?> getUserDataFromToken() async {
+    try {
+      final String? token = await getAccessToken();
+      if (token == null || token.isEmpty) {
+        return null;
+      }
+      
+      // JWT tokens are three parts separated by dots: header.payload.signature
+      final parts = token.split('.');
+      if (parts.length != 3) {
+        return null;
+      }
+      
+      // Decode the payload (middle part)
+      String normalizedPayload = parts[1];
+      // Add padding if needed
+      while (normalizedPayload.length % 4 != 0) {
+        normalizedPayload += '=';
+      }
+      
+      // Base64 decode
+      final payloadBytes = base64Url.decode(normalizedPayload);
+      final payloadString = utf8.decode(payloadBytes);
+      
+      // Parse JSON
+      return json.decode(payloadString);
+    } catch (e) {
+      print('Error extracting user data from token: $e');
+      return null;
+    }
+  }
+  
+  // Get user ID from token directly
+  static Future<String?> getUserIdFromToken() async {
+    final userData = await getUserDataFromToken();
+    return userData?['userId'] as String?;
+  }
+
   // Retrieve access token from SharedPreferences
   static Future<String?> getAccessToken() async {
     final prefs = await SharedPreferences.getInstance();

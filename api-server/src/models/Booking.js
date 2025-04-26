@@ -58,6 +58,16 @@ module.exports = (sequelize) => {
       type: DataTypes.DATE,
       allowNull: true
     },
+    service_start_time: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      comment: 'The actual date and time when the service is scheduled to start'
+    },
+    service_end_time: {
+      type: DataTypes.DATE,
+      allowNull: true,
+      comment: 'The actual date and time when the service is scheduled to end'
+    },
     cancellation_reason: {
       type: DataTypes.TEXT,
       allowNull: true

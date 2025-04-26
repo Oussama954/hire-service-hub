@@ -58,27 +58,28 @@ class _MessagesScreenState extends State<MessagesScreen> {
                   itemBuilder: (context, index) {
                     final conversation =
                         chattingProvider.conversations[index];
+                    // Handle potential nulls and different name formats
+                    String displayName = conversation.otherUser?.firstName ?? conversation.otherUser?.name ?? "Unknown User";
+                    String? profilePicture = conversation.otherUser?.profilePicture;
+                    
+                    // Safely access messages
+                    final messages = conversation.messages;
+                    final hasMessages = messages != null && messages.isNotEmpty;
+                    final lastMessage = hasMessages ? messages.last : null;
+                    
                     return _buildMessageItem(
                       conversation: conversation,
-                      name:
-                          "${conversation.otherUser?.firstName} ${conversation.otherUser?.lastName}",
-                      message: conversation.messages!.isEmpty
-                          ? " "
-                          : conversation.messages!.last.text,
-                      date: conversation.messages!.isEmpty
-                          ? " "
-                          : formatDateWithTime(
-                              conversation.messages!.last.createdAt
-                                  .toString(),
-                            ),
-                      time: conversation.messages!.isEmpty
-                          ? " "
-                          : getFormattedTime12Hour(
-                              conversation.messages!.last.createdAt
-                                  .toString(),
-                            ),
+                      name: displayName,
+                      message: hasMessages ? lastMessage!.text : "No messages yet",
+                      date: hasMessages && lastMessage?.createdAt != null
+                          ? formatDateWithTime(lastMessage!.createdAt.toString())
+                          : "",
+                      time: hasMessages && lastMessage?.createdAt != null
+                          ? getFormattedTime12Hour(lastMessage!.createdAt.toString())
+                          : "",
                       avatarColor: AppTheme.fMainColor,
-                      avatarUrl: conversation.otherUser!.profilePicture,
+                      avatarText: displayName.isNotEmpty ? displayName[0].toUpperCase() : "?",
+                      avatarUrl: profilePicture,
                     );
                   },
                 )
@@ -103,8 +104,9 @@ class _MessagesScreenState extends State<MessagesScreen> {
     final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     // Truncate the message if it's too long
-    String truncatedMessage =
-        message.length > 80 ? "${message.substring(0, 80)}..." : message;
+    String truncatedMessage = message.isEmpty
+        ? "No messages yet"
+        : (message.length > 80 ? "${message.substring(0, 80)}..." : message);
 
     return GestureDetector(
       onTap: () {
@@ -128,17 +130,33 @@ class _MessagesScreenState extends State<MessagesScreen> {
           padding: const EdgeInsets.all(10.0),
           child: Row(
             children: [
-              // Avatar
-              avatarUrl != null
+              // Avatar with error handling
+              avatarUrl != null && avatarUrl.isNotEmpty
                   ? CircleAvatar(
-                      backgroundImage: CachedNetworkImageProvider(avatarUrl),
+                      backgroundColor: avatarColor,
                       radius: 24,
+                      backgroundImage: CachedNetworkImageProvider(
+                        avatarUrl,
+                        // errorListener expects Function(Object), not Function()
+                        errorListener: (error) {
+                          print("Failed to load avatar image: $error");
+                        },
+                      ),
+                      onBackgroundImageError: (exception, stackTrace) {
+                        print("Error loading avatar: $exception");
+                      },
+                      child: avatarText != null && avatarText.isNotEmpty
+                          ? Text(
+                              avatarText,
+                              style: const TextStyle(color: Colors.white),
+                            )
+                          : null,
                     )
                   : CircleAvatar(
                       backgroundColor: avatarColor,
                       radius: 24,
                       child: Text(
-                        avatarText ?? '',
+                        avatarText ?? '?',
                         style: const TextStyle(color: Colors.white),
                       ),
                     ),
@@ -149,7 +167,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      name,
+                      name.isNotEmpty ? name : "Unknown User",
                       style: const TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 16,
@@ -158,13 +176,15 @@ class _MessagesScreenState extends State<MessagesScreen> {
                     Row(
                       children: [
                         Text(
-                          date,
+                          date.isNotEmpty ? date : "",
                           style:
                               TextStyle(color: isDarkMode ? Colors.white70 : Colors.grey, fontSize: 12),
                         ),
-                        const Text(' - '),
+                        date.isNotEmpty && time.isNotEmpty 
+                            ? const Text(' - ')
+                            : const SizedBox(),
                         Text(
-                          time,
+                          time.isNotEmpty ? time : "",
                           style:
                               TextStyle(color: isDarkMode ? Colors.white70 : Colors.grey, fontSize: 12),
                         ),

@@ -23,10 +23,15 @@ class ReviewsProvider extends ChangeNotifier {
         reviewMessage: reviewMessage,
         rating: rating,
       );
+      
+      // Log the response for debugging
+      print('Review submission response: ${response.statusCode}');
+      print('Response body: ${response.body}');
+      
       return response;
     } catch (e) {
-      print(e);
-      throw Exception('Failed to submit review: $e');
+      print('Error submitting review: $e');
+      rethrow; // Rethrow to let the UI handle the error
     } finally {
       _isLoading = false;
       notifyListeners();

@@ -72,20 +72,28 @@ class ChatService {
     }
     final url = Uri.parse('${Constants.baseUrl}${Constants.messages}');
 
-    final response = await http.post(
-      url,
-      headers: _generateHeaders(accessToken: accessToken),
-      body: json.encode({
-        'conversation_id': conversationId,
-        'text': text,
-      }),
-    );
+    try {
+      final response = await http.post(
+        url,
+        headers: _generateHeaders(accessToken: accessToken),
+        body: json.encode({
+          'conversation_id': conversationId,
+          'text': text,
+        }),
+      );
 
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      return Messages.fromJson(data['data'][0]);
-    } else {
-      // Handle error
+      // Handle both 200 and 201 as success
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = json.decode(response.body);
+        print('Message sent successfully: ${data['message']}');
+        return Messages.fromJson(data['data'][0]);
+      } else {
+        print('Failed to send message. Status code: ${response.statusCode}');
+        print('Response body: ${response.body}');
+        return null;
+      }
+    } catch (e) {
+      print('Error sending message: $e');
       return null;
     }
   }
@@ -112,6 +120,14 @@ class ChatService {
         List<Messages> messages = (data['data'] as List)
             .map((messageData) => Messages.fromJson(messageData))
             .toList();
+            
+        // Sort messages by createdAt date (oldest first)
+        // This ensures messages appear chronologically in the ListView
+        // with newest messages at the bottom
+        messages.sort((a, b) => a.createdAt != null && b.createdAt != null
+            ? a.createdAt!.compareTo(b.createdAt!)
+            : 0);
+            
         return messages;
       } else {
         return []; // Return an empty list if no messages are found

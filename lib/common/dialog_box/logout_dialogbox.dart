@@ -32,11 +32,12 @@ void showLogoutDialog(BuildContext context) {
           ElevatedButton(
             onPressed: () async {
               if (!authProvider.isLoading) {
-                final statusCode = await authProvider.logout();
-
-                Navigator.of(context).pop(); // Close the dialog
-
-                if (statusCode == 200) {
+                try {
+                  // Call logout which now returns void
+                  await authProvider.logout();
+                  Navigator.of(context).pop(); // Close the dialog
+                  
+                  // Navigate to the GetStarted screen after successful logout
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(
@@ -44,11 +45,12 @@ void showLogoutDialog(BuildContext context) {
                     ),
                   );
                   showCustomSnackBar(
-                      context, "Logout successfully!", Colors.green);
-                } else {
+                    context, "Logout successful!", Colors.green);
+                } catch (e) {
+                  Navigator.of(context).pop(); // Close the dialog
                   showCustomSnackBar(
                     context,
-                    "Logout failed. Please try again",
+                    "Logout failed: ${e.toString()}",
                     Colors.red,
                   );
                 }

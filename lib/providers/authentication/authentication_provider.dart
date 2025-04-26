@@ -11,6 +11,7 @@ import 'dart:convert';
 import '../../models/auth/user_model.dart';
 import '../../models/auth/role_model.dart';
 import '../../services/authentication/auth_servcies.dart';
+import '../../services/chatting/socket_manager.dart';
 
 class AuthenticationProvider extends ChangeNotifier {
   final AuthService _authService = AuthService(); // Instance of AuthService
@@ -124,6 +125,9 @@ class AuthenticationProvider extends ChangeNotifier {
         final userModel = UserModel.fromJsonForLogin(responseData);
         _user = userModel;
 
+        // Initialize the global socket connection after successful login
+        await _initializeSocket();
+        
         notifyListeners();
 
         return 200; // Success
@@ -134,10 +138,22 @@ class AuthenticationProvider extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
       print("Error From Provider: $error");
-      return -1; // Error
+      return 500; // Error
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  /// Initialize the global socket connection
+  Future<void> _initializeSocket() async {
+    try {
+      // Initialize the SocketManager singleton
+      await SocketManager().initialize();
+      print("Socket initialized for user: ${_user?.id}");
+    } catch (e) {
+      print("Error initializing socket: $e");
+      // Don't throw the error - just log it so login can still succeed
     }
   }
 
@@ -152,6 +168,9 @@ class AuthenticationProvider extends ChangeNotifier {
         if (data['success']) {
           _user = UserModel.fromJsonGetMyData(data);
 
+          // Initialize the socket connection when user data is loaded
+          await _initializeSocket();
+          
           notifyListeners();
           return 200; // Success
         }
@@ -419,36 +438,29 @@ class AuthenticationProvider extends ChangeNotifier {
     }
   }
 
-  Future<int> logout() async {
-    _isLoading = true;
-    notifyListeners();
-
+  Future<void> logout() async {
     try {
-      final response = await AuthService()
-          .logout()
-          .timeout(const Duration(seconds: 10)); // Call the AuthService method
+      _isLoading = true;
+      notifyListeners();
+
+      // Disconnect socket before logging out
+      SocketManager().disposeSocket();
+
+      // Call API for logout if needed
+      await _authService.logout();
+
+      // Clear locally stored tokens
+      await AuthService.clearTokens();
+
+      // Clear user data
+      _user = null;
 
       _isLoading = false;
       notifyListeners();
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        if (data['success']) {
-          // Clear stored tokens using AuthService
-          await AuthService.clearTokens();
-          return 200; // Logout successful
-        } else {
-          return 400; // You can change this based on your API error handling logic
-        }
-      } else {
-        return response
-            .statusCode; // Return the actual error code from response
-      }
     } catch (error) {
       _isLoading = false;
       notifyListeners();
-      print('Logout failed with error: $error');
-      return 500; // Return 500 or a custom error code indicating internal server error or other issue
+      print("Error: $error");
     }
   }
 
@@ -551,6 +563,11 @@ class AuthenticationProvider extends ChangeNotifier {
               role: Roles(title: data['newRole']),
             );
           }
+          
+          // Reinitialize socket with new role
+          SocketManager().disposeSocket();
+          await _initializeSocket();
+          
           notifyListeners();
           return 200; // Success
         }

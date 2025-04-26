@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:carded/carded.dart';
 import 'package:e_commerce/common/slide_page_routes/slide_page_route.dart';
 import 'package:e_commerce/common/snakbar/custom_snakbar.dart';
+import 'package:e_commerce/providers/authentication/authentication_provider.dart';
 import 'package:e_commerce/providers/orders/orders_provider.dart';
 import 'package:e_commerce/screens/orders/order_update_screen.dart';
 import 'package:e_commerce/screens/orders/review_order_dialog.dart';
@@ -671,31 +672,84 @@ class OrderCard extends StatelessWidget {
               ),
             ],
           );
-        } else if (order.orderStatus == "processing") {
+        } else if (order.orderStatus == "processing" || order.orderStatus == "accepted") {
+          // Show complete button for both accepted and processing orders
+          // This allows providers to complete orders manually before the automatic completion
           actionWidget = _ActionButton(
             label: 'Mark As Completed',
             icon: Icons.check_circle_outline,
             color: AppTheme.success,
             onPressed: () async {
-              try {
-                final response = await orderProvider.completeOrder(order.id);
-                if (response!.statusCode == 200) {
-                  orderProvider.fetchMyOrders();
-                  final responseData = jsonDecode(response.body);
-                  showCustomSnackBar(
-                      context, responseData['message'], Colors.green);
-                  Navigator.pop(context); // Close the dialog
-                } else {
-                  final responseData = jsonDecode(response.body);
-                  showCustomSnackBar(
-                      context,
-                      responseData['message'] ?? "An error occurred.",
-                      Colors.red);
-                }
-              } catch (e) {
-                showCustomSnackBar(
-                    context, "An error occurred: $e", Colors.red);
-              }
+              // Show confirmation dialog
+              showDialog(
+                context: context,
+                builder: (BuildContext dialogContext) {
+                  final isDarkMode = Theme.of(dialogContext).brightness == Brightness.dark;
+                  return AlertDialog(
+                    backgroundColor: isDarkMode ? Colors.grey[900] : Colors.white,
+                    title: Text(
+                      'Complete Order',
+                      style: GoogleFonts.inter(
+                        fontWeight: FontWeight.w600,
+                        color: isDarkMode ? Colors.white : Colors.black87,
+                      ),
+                    ),
+                    content: Text(
+                      'Are you sure you want to mark this order as completed? This action cannot be undone.',
+                      style: GoogleFonts.inter(
+                        color: isDarkMode ? Colors.white70 : Colors.grey[800],
+                      ),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(dialogContext),
+                        child: Text(
+                          'Cancel',
+                          style: GoogleFonts.inter(
+                            color: isDarkMode ? Colors.white70 : Colors.grey[700],
+                          ),
+                        ),
+                      ),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.success,
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: () async {
+                          // Close confirmation dialog first
+                          Navigator.pop(dialogContext);
+                          
+                          try {
+                            final response = await orderProvider.completeOrder(order.id);
+                            if (response!.statusCode == 200) {
+                              orderProvider.fetchMyOrders();
+                              final responseData = jsonDecode(response.body);
+                              showCustomSnackBar(
+                                  context, responseData['message'], Colors.green);
+                              Navigator.pop(context); // Close the order details screen
+                            } else {
+                              final responseData = jsonDecode(response.body);
+                              showCustomSnackBar(
+                                  context,
+                                  responseData['message'] ?? "An error occurred.",
+                                  Colors.red);
+                            }
+                          } catch (e) {
+                            showCustomSnackBar(
+                                context, "An error occurred: $e", Colors.red);
+                          }
+                        },
+                        child: Text(
+                          'Complete Order',
+                          style: GoogleFonts.inter(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              );
             },
           );
         } else {
@@ -822,6 +876,7 @@ class _CancelOrderDialogState extends State<_CancelOrderDialog> {
 
   Future<void> _cancelOrderWithReason() async {
     final provider = Provider.of<OrderProvider>(context, listen: false);
+    final authProvider = Provider.of<AuthenticationProvider>(context, listen: false);
     final reason = widget.reasonController.text.trim();
 
     if (reason.isEmpty) {
@@ -835,11 +890,31 @@ class _CancelOrderDialogState extends State<_CancelOrderDialog> {
     });
 
     try {
+      // Check if user is already in service_provider role
+      bool isServiceProvider = authProvider.user?.role?.title == 'service_provider';
+      bool didSwitchRole = false;
+      
+      // If not service provider, switch role
+      if (!isServiceProvider) {
+        final switchResult = await authProvider.switchRole();
+        didSwitchRole = switchResult == 200;
+        
+        // Wait a moment for the token to be processed
+        await Future.delayed(const Duration(milliseconds: 500));
+      }
+      
+      // Attempt to cancel the order
       final response = await provider.cancelOrder(
         orderId: widget.order.id,
         cancellationReason: reason,
       );
-
+      
+      // Switch back to customer role if we switched roles earlier
+      if (didSwitchRole) {
+        await authProvider.switchRole();
+      }
+      
+      // Handle response
       if (response.statusCode == 200) {
         provider.fetchMyOrders();
         final responseData = jsonDecode(response.body);
@@ -864,70 +939,152 @@ class _CancelOrderDialogState extends State<_CancelOrderDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(
-        "Cancel Order",
-        style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.accentText),
-      ),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppTheme.radius_lg)),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            "Please provide a reason for canceling this order.",
-            style: GoogleFonts.inter(color: AppTheme.darkGrey),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: widget.reasonController,
-            decoration: InputDecoration(
-              labelText: "Cancellation Reason",
-              labelStyle: TextStyle(color: AppTheme.primaryColor),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.all(Radius.circular(AppTheme.radius_md)),
-                borderSide: BorderSide(color: AppTheme.primaryColor),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.all(Radius.circular(AppTheme.radius_md)),
-                borderSide: BorderSide(color: Colors.grey.shade300),
-              ),
-              filled: true,
-              fillColor: Colors.grey.shade50,
-            ),
-            maxLines: 2,
-          ),
-        ],
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text("Close", style: TextStyle(color: Theme.of(context).brightness == Brightness.dark ? Colors.white : AppTheme.accentText)),
-        ),
-        ElevatedButton(
-          onPressed: _isLoading ? null : _cancelOrderWithReason,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppTheme.warning,
-            minimumSize: const Size(100, 36),
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppTheme.radius_md),
-            ),
-          ),
-          child: _isLoading
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
-                    strokeWidth: 2,
+    return Dialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24.0),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: isDarkMode ? 0 : 8,
+      backgroundColor: isDarkMode ? Colors.grey.shade900 : Colors.white,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header with icon
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppTheme.warning.withOpacity(isDarkMode ? 0.2 : 0.1),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                )
-              : Text(
-                  "Cancel Order",
-                  style: TextStyle(color: Colors.white),
+                  child: Icon(
+                    IconlyBold.delete,
+                    size: 20,
+                    color: AppTheme.warning,
+                  ),
                 ),
+                const SizedBox(width: 16),
+                Text(
+                  "Cancel Order",
+                  style: GoogleFonts.inter(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: isDarkMode ? Colors.white : AppTheme.darkGrey,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            
+            // Description
+            Text(
+              "Please provide a reason for canceling this order:",
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                color: isDarkMode ? Colors.white70 : Colors.grey[700],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 16),
+            
+            // Text Field
+            Container(
+              decoration: BoxDecoration(
+                color: isDarkMode ? Colors.black12 : Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: isDarkMode ? Colors.white10 : Colors.grey.shade200),
+                boxShadow: isDarkMode ? [] : [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.03),
+                    blurRadius: 8,
+                    spreadRadius: 0,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: TextField(
+                controller: widget.reasonController,
+                style: GoogleFonts.inter(
+                  color: isDarkMode ? Colors.white : Colors.black87,
+                ),
+                maxLines: 3,
+                decoration: InputDecoration(
+                  hintText: "Please explain why you're canceling...",
+                  hintStyle: GoogleFonts.inter(
+                    color: isDarkMode ? Colors.white38 : Colors.grey.shade400,
+                    fontSize: 14,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  border: InputBorder.none,
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            
+            // Action buttons
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                // Back button
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  ),
+                  child: Text(
+                    "Back",
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: isDarkMode ? Colors.white70 : Colors.grey[700],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                
+                // Cancel order button
+                ElevatedButton(
+                  onPressed: _isLoading ? null : _cancelOrderWithReason,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.warning,
+                    foregroundColor: Colors.white,
+                    elevation: isDarkMode ? 0 : 2,
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: _isLoading 
+                      ? SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(IconlyLight.delete, size: 18),
+                            const SizedBox(width: 8),
+                            Text(
+                              "Cancel Order",
+                              style: GoogleFonts.inter(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                ),
+              ],
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

@@ -77,8 +77,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
   void _scrollToBottom() {
     if (_scrollController.hasClients) {
+      // Scroll to the bottom to see newest messages
       _scrollController.animateTo(
-        _scrollController.position.minScrollExtent,
+        _scrollController.position.maxScrollExtent,
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeOut,
       );
@@ -118,9 +119,13 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
             ),
             forceMaterialTransparency: true,
             title: Text(
-              "${widget.conversation.otherUser?.firstName} ${widget.conversation.otherUser?.lastName}",
-              style: const TextStyle(fontSize: 20),
+              // Handle null firstName or empty name by using name field first, then defaulting
+              widget.conversation.otherUser?.firstName ??
+                  widget.conversation.otherUser?.name ??
+                  "Unknown User",
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
+            centerTitle: true,
           ),
           body: SafeArea(
             child: Consumer2<ChattingProvider, AuthenticationProvider>(
@@ -133,32 +138,68 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
                 return Column(
                   children: [
+                    // Message area (expanded to fill available space)
                     Expanded(
                       child: chatProvider.isLoading
-                          ? Center(
-                              child: CircularProgressIndicator(
-                                  color: AppTheme.fMainColor),
+                          ? const Center(
+                              child: CircularProgressIndicator(),
                             )
                           : chatProvider.messages.isEmpty
-                              ? const Center(child: Text('Say Hii! 👋'))
+                              ? Center(
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.chat_bubble_outline,
+                                          size: 50,
+                                          color: Theme.of(context).brightness ==
+                                                  Brightness.dark
+                                              ? Colors.white54
+                                              : Colors.black38),
+                                      const SizedBox(height: 16),
+                                      Text("No messages yet!",
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            color: Theme.of(context).brightness ==
+                                                    Brightness.dark
+                                                ? Colors.white70
+                                                : Colors.black54,
+                                          )),
+                                      const SizedBox(height: 8),
+                                      Text("Start the conversation",
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            color: Theme.of(context).brightness ==
+                                                    Brightness.dark
+                                                ? Colors.white54
+                                                : Colors.black38,
+                                          )),
+                                    ],
+                                  ),
+                                )
                               : ListView.builder(
-                                  physics: const BouncingScrollPhysics(),
                                   controller: _scrollController,
-                                  reverse:
-                                      true, // Reverses the list to start at the bottom
+                                  // No need for reverse: true when messages are already sorted correctly
+                                  padding: const EdgeInsets.only(bottom: 10), 
                                   itemCount: chatProvider.messages.length,
                                   itemBuilder: (context, index) {
-                                    final message = chatProvider.messages[
-                                        chatProvider.messages.length -
-                                            1 -
-                                            index];
-                                    bool isMyMessage =
-                                        message.senderId == authUserId;
-                                    return _buildMessageBubble(
-                                        message, isMyMessage);
+                                    // Access messages with most recent ones at the bottom
+                                    final message = chatProvider.messages[index];
+                                    final isMyMessage = message.senderId == authUserId;
+                                    return _buildMessageBubble(message, isMyMessage);
                                   },
                                 ),
                     ),
+                    
+                    // Optional debug info - display recipient ID
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        'Conversation with: $receiverId',
+                        style: TextStyle(fontSize: 10, color: Colors.grey),
+                      ),
+                    ),
+                    
+                    // Message input at the bottom
                     _buildMessageInput(chatProvider, authUserId!, receiverId),
                   ],
                 );
@@ -171,14 +212,29 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   }
 
   Widget _buildMessageBubble(Messages message, bool isMyMessage) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
+    // Safely handle potentially null or empty text
+    final messageText = message.text.isEmpty ? "[Empty message]" : message.text;
+    
+    // Safely handle potentially null createdAt values
+    final messageTime = message.createdAt != null 
+        ? calculateTimeForChatMessage(message.createdAt.toString())
+        : 'Just now';
+    
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
       child: Align(
         alignment: isMyMessage ? Alignment.centerRight : Alignment.centerLeft,
         child: Container(
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width * 0.75, // Limit bubble width
+          ),
           padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
           decoration: BoxDecoration(
-            color: isMyMessage ? AppTheme.fMainColor : Colors.grey[300],
+            color: isMyMessage 
+                ? AppTheme.fMainColor 
+                : isDarkMode ? Colors.grey[800] : Colors.grey[300],
             borderRadius: BorderRadius.only(
               topLeft: const Radius.circular(18),
               topRight: const Radius.circular(18),
@@ -189,21 +245,33 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                   ? const Radius.circular(0)
                   : const Radius.circular(18),
             ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 3,
+                offset: const Offset(0, 1),
+              ),
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                message.text,
+                messageText,
                 style: TextStyle(
-                  color: isMyMessage ? Colors.white : Colors.black,
+                  color: isMyMessage 
+                      ? Colors.white 
+                      : isDarkMode ? Colors.white : Colors.black,
+                  fontSize: 16,
                 ),
               ),
               const SizedBox(height: 5),
               Text(
-                calculateTimeForChatMessage(message.createdAt.toString()),
+                messageTime,
                 style: TextStyle(
-                  color: isMyMessage ? Colors.white70 : Colors.black54,
+                  color: isMyMessage 
+                      ? Colors.white70 
+                      : isDarkMode ? Colors.white54 : Colors.black54,
                   fontSize: 12,
                 ),
               ),
@@ -215,7 +283,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   }
 
   Widget _buildMessageInput(
-      ChattingProvider chatProvider, String authUserId, String reevicerId) {
+      ChattingProvider chatProvider, String authUserId, String receiverId) {
     final bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
@@ -225,8 +293,12 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
-                color: isDarkMode ? AppTheme.fdarkBlue : Colors.grey[300],
-                borderRadius: BorderRadius.circular(10),
+                color: isDarkMode ? AppTheme.fdarkBlue : Colors.grey[200],
+                borderRadius: BorderRadius.circular(24), // More rounded input field
+                border: Border.all(
+                  color: isDarkMode ? Colors.grey[700]! : Colors.grey[300]!,
+                  width: 1,
+                ),
               ),
               child: Row(
                 children: [
@@ -234,9 +306,19 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                     child: TextField(
                       controller: _messageController,
                       decoration: const InputDecoration(
-                        hintText: "Type Something...",
+                        hintText: "Type a message...",
                         border: InputBorder.none,
                       ),
+                      // Add enter key to send message
+                      onSubmitted: (text) {
+                        if (text.trim().isNotEmpty) {
+                          chatProvider.sendMessage(
+                              widget.conversation.id, text, authUserId, receiverId);
+                          _messageController.clear();
+                          SchedulerBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+                          chatProvider.fetchConversations();
+                        }
+                      },
                     ),
                   ),
                 ],
@@ -246,20 +328,31 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
           const SizedBox(width: 8),
           IconGradientButton(
             width: 50,
-            height: 45,
+            height: 50,
             icon: IconlyBold.send,
             onPressed: () {
               final text = _messageController.text.trim();
               if (text.isNotEmpty) {
-                chatProvider.sendMessage(
-                    widget.conversation.id, text, authUserId, reevicerId);
-                _messageController.clear();
+                // Show loading indicator while sending
+                try {
+                  chatProvider.sendMessage(
+                      widget.conversation.id, text, authUserId, receiverId);
+                  _messageController.clear();
 
-                // Scroll to bottom after sending
-                SchedulerBinding.instance.addPostFrameCallback((_) {
-                  _scrollToBottom();
-                });
-                chatProvider.fetchConversations();
+                  // Scroll to bottom after sending
+                  SchedulerBinding.instance.addPostFrameCallback((_) {
+                    _scrollToBottom();
+                  });
+                  chatProvider.fetchConversations();
+                } catch (e) {
+                  // Show error snackbar
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text("Failed to send message: ${e.toString()}"),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
               }
             },
           ),

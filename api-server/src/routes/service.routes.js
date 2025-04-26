@@ -1,6 +1,6 @@
 const express = require('express');
 const { body, query, param } = require('express-validator');
-const serviceController = require('../controllers/service.controller');
+const { controller: serviceController } = require('../controllers/service.controller');
 const { verifyToken, requireRole } = require('../middlewares/auth');
 const upload = require('../middleware/upload');
 
@@ -49,6 +49,15 @@ router.post(
 );
 
 router.put(
+  '/:id',
+  verifyToken,
+  requireRole(['service_provider']),
+  updateServiceValidation,
+  serviceController.updateService
+);
+
+// Add PATCH route to support the Flutter client
+router.patch(
   '/:id',
   verifyToken,
   requireRole(['service_provider']),

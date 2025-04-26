@@ -18,6 +18,7 @@ import 'package:e_commerce/utils/date_and_time_formatting.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:iconly/iconly.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../common/snakbar/custom_snakbar.dart';
@@ -39,6 +40,75 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
       Provider.of<ServiceProvider>(context, listen: false)
           .fetchSingleServiceDetail(widget.service.id);
     });
+  }
+  
+  // Helper method to format time range from different time formats
+  String _getFormattedTimeRange(dynamic startTime, dynamic endTime) {
+    try {
+      // Format start time
+      String formattedStartTime;
+      if (startTime is String) {
+        // Try to parse as DateTime
+        try {
+          final dateTime = DateTime.parse(startTime);
+          formattedStartTime = DateFormat('h:mm a').format(dateTime);
+        } catch (_) {
+          // If can't parse, show as is
+          formattedStartTime = startTime;
+        }
+      } else if (startTime is DateTime) {
+        formattedStartTime = DateFormat('h:mm a').format(startTime);
+      } else {
+        formattedStartTime = startTime?.toString() ?? 'N/A';
+      }
+      
+      // Format end time
+      String formattedEndTime;
+      if (endTime is String) {
+        // Try to parse as DateTime
+        try {
+          final dateTime = DateTime.parse(endTime);
+          formattedEndTime = DateFormat('h:mm a').format(dateTime);
+        } catch (_) {
+          // If can't parse, show as is
+          formattedEndTime = endTime;
+        }
+      } else if (endTime is DateTime) {
+        formattedEndTime = DateFormat('h:mm a').format(endTime);
+      } else {
+        formattedEndTime = endTime?.toString() ?? 'N/A';
+      }
+      
+      return "$formattedStartTime - $formattedEndTime";
+    } catch (e) {
+      // Return a safe fallback if anything fails
+      return "Service hours not available";
+    }
+  }
+  
+  // Helper method to handle different city data structures
+  String? _getCityName(dynamic cityData) {
+    if (cityData == null) {
+      return null;
+    }
+    
+    // If cityData is a String, return it directly
+    if (cityData is String) {
+      return cityData;
+    }
+    
+    // If cityData is a Map with a 'name' field
+    if (cityData is Map && cityData.containsKey('name')) {
+      return cityData['name'];
+    }
+    
+    // If cityData has a name property
+    try {
+      return cityData.name;
+    } catch (_) {}
+    
+    // Fall back to toString() if no other option works
+    return cityData.toString();
   }
 
   @override
@@ -330,7 +400,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
-                                      service.city ?? "Not specified",
+                                      _getCityName(service.city) ?? "Not specified",
                                       style: GoogleFonts.inter(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w500,
@@ -361,7 +431,7 @@ class _ServiceDetailsScreenState extends State<ServiceDetailsScreen> {
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
-                                      "${getFormattedTime12Hour(service.startTime.toString())} - ${getFormattedTime12Hour(service.endTime.toString())}",
+                                      _getFormattedTimeRange(service.startTime, service.endTime),
                                       style: GoogleFonts.inter(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w500,

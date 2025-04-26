@@ -1,6 +1,18 @@
 const { Op } = require('sequelize');
 const { Service, User, Category, Review, City } = require('../models');
 const { validationResult } = require('express-validator');
+const businessNotificationService = require('../services/business-notification.service');
+
+// References to store socket.io instance and connected users
+let io;
+let connectedUsers = [];
+
+// Function to initialize socket references
+function setSocketReferences(socketIo, users) {
+  io = socketIo;
+  connectedUsers = users;
+  console.log('Socket references set in ServiceController');
+}
 
 class ServiceController {
   async createService(req, res) {
@@ -107,8 +119,14 @@ class ServiceController {
 
   async updateService(req, res) {
     try {
+      console.log('🔄 UPDATE SERVICE REQUEST:');
+      console.log('🔹 Service ID:', req.params.id);
+      console.log('🔹 User ID:', req.user.id);
+      console.log('🔹 Request Body:', JSON.stringify(req.body));
+      
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
+        console.log('❌ Validation errors:', errors.array());
         return res.status(400).json({ success: false, errors: errors.array() });
       }
 
@@ -118,6 +136,7 @@ class ServiceController {
         description,
         price,
         category_id,
+        city_id,
         availability,
         location,
         images,
@@ -138,19 +157,56 @@ class ServiceController {
         return res.status(404).json({ success: false, message: 'Service not found' });
       }
 
+      // Log all update fields for debugging
+      console.log('\ud83d\udd39 Updating service fields:');
+      console.log('title:', title);
+      console.log('description:', description);
+      console.log('price:', price);
+      console.log('category_id:', category_id);
+      console.log('city_id:', city_id);
+      console.log('is_active:', is_active);
+      console.log('start_time:', start_time);
+      console.log('end_time:', end_time);
+      
       // Update service
-      await service.update({
-        title: title || service.title,
-        description: description || service.description,
-        price: price || service.price,
-        category_id: category_id || service.category_id,
-        availability: availability || service.availability,
-        location: location || service.location,
+      const updateData = {
+        title,
+        description,
+        price,
+        category_id,
+        cityId: city_id,
+        availability,
+        location,
         images: images || service.images,
         is_active: typeof is_active === 'boolean' ? is_active : service.is_active,
         startTime: start_time || service.startTime,
-        endTime: end_time || service.endTime
-      });
+        endTime: end_time || service.endTime,
+        status: status || service.status
+      };
+
+      // Store the previous status before update
+      const previousStatus = service.status;
+      
+      await service.update(updateData);
+      console.log('Service updated:', { id: service.id, ...updateData });
+      
+      // If status was updated, send notification to the service provider
+      if (updateData.status && previousStatus !== updateData.status) {
+        try {
+          if (io && connectedUsers) {
+            await businessNotificationService.sendServiceStatusNotification(
+              service.id,
+              updateData.status,
+              io,
+              connectedUsers
+            );
+            console.log(`Service status notification sent to provider ${service.provider_id} for status ${updateData.status}`);
+          }
+        } catch (notificationError) {
+          console.error('Failed to send service status notification:', notificationError);
+          // Continue execution - notification failure shouldn't prevent service update
+        }
+      }
 
       // Get updated service with relations
       const updatedService = await Service.findByPk(service.id, {
@@ -167,9 +223,27 @@ class ServiceController {
         ]
       });
 
+      // Format the response to match other API endpoints
+      let cleanService = updatedService && updatedService.toJSON ? updatedService.toJSON() : updatedService;
+      if (cleanService && typeof cleanService.price === 'number') {
+        cleanService.price = Number.isInteger(cleanService.price)
+          ? cleanService.price.toString()
+          : cleanService.price.toFixed(2);
+      } else if (cleanService && typeof cleanService.price === 'string') {
+        const parsed = parseFloat(cleanService.price);
+        cleanService.price = Number.isInteger(parsed)
+          ? parsed.toString()
+          : parsed.toFixed(2);
+      }
+      
+      // Map backend fields to match frontend expectations
+      cleanService.service_name = cleanService.title || '';
+      cleanService.user_id = cleanService.provider_id;
+      cleanService.is_available = cleanService.is_active !== undefined ? cleanService.is_active : true;
+      
       res.json({
         success: true,
-        data: updatedService
+        data: [cleanService] // Use array format to match other endpoints
       });
     } catch (error) {
       console.error('Update service error:', error);
@@ -495,4 +569,9 @@ class ServiceController {
   }
 }
 
-module.exports = new ServiceController();
+const serviceController = new ServiceController();
+
+module.exports = {
+  controller: serviceController,
+  setSocketReferences
+};

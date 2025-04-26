@@ -64,14 +64,19 @@ class OrderService {
   }) async {
     String? accessToken = await AuthService.getAccessToken();
     if (accessToken == null) throw Exception("Access token is missing.");
+
+    // Updated URL to match backend route
     final url = Uri.parse(
-        "${Constants.baseUrl}${Constants.userApiBookingOrder}/cancel/$orderId");
+        "${Constants.baseUrl}${Constants.userApiBookingOrder}/service-provider/$orderId");
+
     final headers = {
       "Content-Type": "application/json",
-      "Authorization": "Bearer $accessToken", // Replace with actual token
+      "Authorization": "Bearer $accessToken",
     };
 
+    // Updated request body to match backend requirements
     final body = jsonEncode({
+      "order_status": "cancelled",
       "cancellation_reason": cancellationReason,
     });
 

@@ -1,6 +1,6 @@
 const express = require('express');
 const { body, query } = require('express-validator');
-const bookingController = require('../controllers/booking.controller');
+const { controller: bookingController } = require('../controllers/booking.controller');
 const { verifyToken, requireRole } = require('../middleware/auth');
 
 const router = express.Router();

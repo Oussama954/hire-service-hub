@@ -324,38 +324,77 @@ class ServiceProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> updateService(
+  Future<bool> updateService(
       String serviceId, CreateService updatedService) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      // Convert the ServiceModel to a Map
+      print('🔄 SERVICE PROVIDER: updateService method called');
+      print('🔹 Service ID: $serviceId');
+      print('🔹 Service Name: ${updatedService.serviceName}');
+      print('🔹 Category: ${updatedService.categoryId}');
+      print('🔹 City: ${updatedService.cityId}');
+      
+      // Convert the ServiceModel to a Map - FIXED: complete map with all fields
       final serviceData = {
-        "service_name": updatedService.serviceName,
+        "title": updatedService.serviceName, // Backend expects 'title' instead of 'service_name'
         "description": updatedService.description,
         "category_id": updatedService.categoryId,
-        "cover_photo": updatedService.coverPhoto,
         "price": updatedService.price,
-        "is_available": updatedService.isAvailable,
+        "is_active": updatedService.isAvailable, // Backend expects 'is_active' instead of 'is_available'
         "start_time": updatedService.startTime,
         "end_time": updatedService.endTime,
+        "city_id": updatedService.cityId,
       };
-
+      
+      print('🔹 Service Data being sent: $serviceData');
+      
       // Call the repository to update the service
-      final response =
-          await serviceRepository.updateService(serviceId, serviceData);
-
+      final response = await serviceRepository.updateService(serviceId, serviceData);
+      
+      print('🔹 Service Update Response: $response');
+      
       if (response['success'] == true) {
+        print('✅ Service update successful');
+        
+        // Check if data exists and is in the expected format
+        if (response['data'] != null) {
+          print('🔹 Response data exists: ${response['data']}');
+          
+          if (response['data'] is List && response['data'].isNotEmpty) {
+            print('✅ Response data is a non-empty list');
+          } else {
+            print('⚠️ Response data is not a list or is empty: ${response['data']}');
+          }
+        } else {
+          print('⚠️ Response data is null');
+        }
+        
+        // Refresh service details and services list to show updated data
+        print('🔄 Refreshing service data...');
         await fetchSingleServiceDetail(serviceId);
-        await fetchFilterServices();
+        await fetchMyServices(); // Refresh provider's services
+        
+        // Check if we're viewing filtered services, and refresh those too
+        if (_isFilterApplied) {
+          await fetchFilterServices();
+        } else {
+          await fetchServices(); // Refresh all services if not filtered
+        }
+        
         notifyListeners();
+        return true;
       } else {
-        _errorMessage = "Failed to update service.";
+        print('❌ Service update failed with error: ${response['message']}');
+        _errorMessage = response['message'] ?? "Failed to update service.";
+        return false;
       }
     } catch (e) {
+      print('❌ Exception during service update: $e');
       _errorMessage = e.toString();
+      return false;
     } finally {
       _isLoading = false;
       notifyListeners();

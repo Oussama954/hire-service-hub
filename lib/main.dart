@@ -24,16 +24,29 @@ import 'package:provider/provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize Firebase with proper error handling
   try {
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    print('Firebase initialized successfully');
   } catch (e) {
     if (e.toString().contains('duplicate-app')) {
       print('Firebase already initialized');
     } else {
       print('Error initializing Firebase: $e');
+      print('Stack trace: ${StackTrace.current}');
     }
   }
-  await NotificationService.instance.initialize();
+  
+  // Initialize notification service after Firebase is properly set up
+  try {
+    await NotificationService.instance.initialize();
+    print('Notification service initialized successfully');
+  } catch (e) {
+    print('Error initializing notification service: $e');
+    print('Stack trace: ${StackTrace.current}');
+  }
+  
   runApp(const MyApp());
 }
 

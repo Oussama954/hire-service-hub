@@ -12,7 +12,7 @@ class ReviewService {
   }) async {
     String? accessToken = await AuthService.getAccessToken();
     if (accessToken == null) throw Exception("Access token is missing.");
-    final url = Uri.parse('${Constants.baseUrl}/api/review');
+    final url = Uri.parse('${Constants.baseUrl}/api/reviews');
     print(url);
     final response = await http.post(
       url,
@@ -21,10 +21,10 @@ class ReviewService {
         'Authorization': 'Bearer $accessToken', // Replace with your token logic
       },
       body: jsonEncode({
-        'order_id': orderId,
+        'booking_id': orderId,
         'service_id': serviceId,
-        'review_message': reviewMessage,
-        'rating': rating,
+        'comment': reviewMessage,
+        'rating': rating.toInt(),
       }),
     );
     print(response.body);
@@ -34,7 +34,7 @@ class ReviewService {
   Future<http.Response> deleteReview(String reviewId) async {
     String? accessToken = await AuthService.getAccessToken();
     if (accessToken == null) throw Exception("Access token is missing.");
-    final url = Uri.parse('${Constants.baseUrl}/api/review/$reviewId');
+    final url = Uri.parse('${Constants.baseUrl}/api/reviews/$reviewId');
     final response = await http.delete(
       url,
       headers: {

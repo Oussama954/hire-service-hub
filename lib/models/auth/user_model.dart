@@ -20,6 +20,14 @@ class UserModel {
   final String? roleId;
   final bool? isComplete;
   final Roles? role;
+  
+  // Add a name getter to handle cases where we need a single name field
+  String? get name {
+    if (firstName != null && firstName!.isNotEmpty) {
+      return firstName;
+    }
+    return null;
+  }
 
   UserModel({
     this.id,

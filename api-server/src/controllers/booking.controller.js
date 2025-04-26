@@ -1,6 +1,18 @@
 const { Op } = require('sequelize');
 const { Booking, Service, User, Payment } = require('../models');
 const { validationResult } = require('express-validator');
+const businessNotificationService = require('../services/business-notification.service');
+
+// References to store socket.io instance and connected users
+let io;
+let connectedUsers = [];
+
+// Function to initialize socket references
+function setSocketReferences(socketIo, users) {
+  io = socketIo;
+  connectedUsers = users;
+  console.log('Socket references set in BookingController');
+}
 
 class BookingController {
   async createBooking(req, res) {
@@ -123,6 +135,20 @@ class BookingController {
           }
         ]
       });
+      
+      // Send notification to service provider about new booking
+      try {
+        if (io && connectedUsers) {
+          await businessNotificationService.sendNewBookingNotification(
+            booking.id,
+            io,
+            connectedUsers
+          );
+        }
+      } catch (notificationError) {
+        console.error('Failed to send new booking notification:', notificationError);
+        // Continue execution - notification failure shouldn't prevent booking creation
+      }
 
       // TODO: Send notification to provider
       // if (service.provider.fcm_token) {
@@ -249,12 +275,45 @@ class BookingController {
         });
       }
 
-      // Update booking
-      await booking.update({
+      // Calculate service start and end times if status is being set to 'accepted'
+      let updateData = {
         status,
         cancellation_reason: status === 'cancelled' ? cancellation_reason : null,
         completion_date: status === 'completed' ? new Date() : null
-      });
+      };
+      
+      if (status === 'accepted') {
+        // Extract the booking date and time for service_start_time
+        const bookingDate = booking.booking_date;
+        const startTimeStr = booking.start_time; // Format: HH:MM:SS
+        const endTimeStr = booking.end_time; // Format: HH:MM:SS
+        
+        if (bookingDate && startTimeStr && endTimeStr) {
+          // Convert booking date and time strings to full Date objects
+          const startTimeParts = startTimeStr.split(':').map(Number);
+          const endTimeParts = endTimeStr.split(':').map(Number);
+          
+          // Create start and end Date objects
+          const serviceStartTime = new Date(bookingDate);
+          serviceStartTime.setHours(startTimeParts[0], startTimeParts[1], 0, 0);
+          
+          const serviceEndTime = new Date(bookingDate);
+          serviceEndTime.setHours(endTimeParts[0], endTimeParts[1], 0, 0);
+          
+          // Add to update data
+          updateData.service_start_time = serviceStartTime;
+          updateData.service_end_time = serviceEndTime;
+          
+          console.log('🔄 Setting service times for auto-status updates:');
+          console.log('🔹 Service start time:', serviceStartTime.toISOString());
+          console.log('🔹 Service end time:', serviceEndTime.toISOString());
+        } else {
+          console.warn('⚠️ Unable to set service times: missing booking date or time');
+        }
+      }
+      
+      // Update booking
+      await booking.update(updateData);
 
       // Update payment status if booking is completed
       if (status === 'completed') {
@@ -286,6 +345,26 @@ class BookingController {
           }
         ]
       });
+      
+      // Determine who should be notified (the party NOT making the update)
+      const userIdToNotify = isProvider ? booking.customer_id : booking.provider_id;
+      
+      // Send notification about booking status update
+      try {
+        if (io && connectedUsers) {
+          await businessNotificationService.sendBookingStatusNotification(
+            booking.id,
+            userIdToNotify,
+            status,
+            io,
+            connectedUsers
+          );
+          console.log(`Booking status notification sent to user ${userIdToNotify} for status ${status}`);
+        }
+      } catch (notificationError) {
+        console.error('Failed to send booking status notification:', notificationError);
+        // Continue execution - notification failure shouldn't prevent status update
+      }
 
       // Format response
       const responseData = {
@@ -589,4 +668,9 @@ class BookingController {
   }
 }
 
-module.exports = new BookingController();
+const bookingController = new BookingController();
+
+module.exports = {
+  controller: bookingController,
+  setSocketReferences
+};

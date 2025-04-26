@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs');
 
 module.exports = (sequelize) => {
   class User extends Model {
-    static associate({ Role, Service, Booking, Review }) {
+    static associate({ Address, Service, Review, Role, Booking, Conversation, Message }) {
       User.belongsToMany(Role, {
         through: 'UserRoles',
         foreignKey: 'user_id',
@@ -29,6 +29,19 @@ module.exports = (sequelize) => {
       User.hasMany(Review, {
         foreignKey: 'provider_id',
         as: 'reviews_received'
+      });
+      
+      // Conversations - many-to-many relationship
+      User.belongsToMany(Conversation, {
+        through: 'ConversationMembers',
+        foreignKey: 'user_id',
+        as: 'conversations'
+      });
+      
+      // Messages - one-to-many relationship
+      User.hasMany(Message, {
+        foreignKey: 'sender_id',
+        as: 'sent_messages'
       });
     }
 

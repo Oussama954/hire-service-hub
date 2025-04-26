@@ -228,6 +228,13 @@ class ServiceService {
     try {
       final url = Uri.parse(
           '${Constants.baseUrl}${Constants.userApiService}/$serviceId'); // Backend API endpoint
+      
+      // Debug logs for request
+      print("🔄 UPDATE SERVICE REQUEST");
+      print("🔹 URL: $url");
+      print("🔹 Service ID: $serviceId");
+      print("🔹 Payload: ${jsonEncode(serviceData)}");
+      
       final response = await http.patch(
         url,
         headers: {
@@ -237,12 +244,22 @@ class ServiceService {
         body: jsonEncode(serviceData),
       );
 
+      // Debug logs for response
+      print("🔄 UPDATE SERVICE RESPONSE");
+      print("🔹 Status Code: ${response.statusCode}");
+      print("🔹 Response Body: ${response.body}");
+
       if (response.statusCode == 200) {
-        return jsonDecode(response.body); // Successful response
+        final responseData = jsonDecode(response.body);
+        print("🔹 Decoded Response: $responseData");
+        return responseData; // Successful response
       } else {
-        throw Exception(jsonDecode(response.body)['message']);
+        final errorData = jsonDecode(response.body);
+        print("❌ Error Response: $errorData");
+        throw Exception(errorData['message'] ?? "Unknown error occurred");
       }
     } catch (e) {
+      print("❌ Exception caught: $e");
       throw Exception("Failed to update service: $e");
     }
   }

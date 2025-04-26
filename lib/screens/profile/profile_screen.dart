@@ -863,6 +863,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                   
+
+                  
                   // Logout Button
                   Container(
                     margin: const EdgeInsets.symmetric(vertical: 24),
